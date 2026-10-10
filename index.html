@@ -323,7 +323,7 @@
     anm.hidden = !anmerkung;
     anm.textContent = anmerkung ? `Anmerkung: ${anmerkung}` : "";
     const knopf = document.getElementById("abschicken");
-    knopf.textContent = mengen.some(n => n) ? "Bestellung abschicken" : "Keine Bestellung abschicken";
+    knopf.textContent = mengen.some(n => n) ? "Bestellung abschicken" : "Ohne Bestellung abschließen";
     knopf.disabled = false;
     knopf.classList.remove("sendet");
     document.getElementById("fehler").hidden = true;
