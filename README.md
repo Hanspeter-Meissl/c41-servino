@@ -8,14 +8,18 @@ Mindestbestellung von 6 Flaschen. „Weiter zur Bestellung“ öffnet das Micros
 „SERVINO-Bestellung Club 41“ mit allen Angaben vorausgefüllt; dort schickt das Mitglied ab.
 Die Bestellungen kommen damit nur in Forms an, die Seite speichert nichts.
 
-Der persönliche Link trägt die Kennung des Mitglieds: `?m=Nr.%2018%20Meissl`.
+Der persönliche Link trägt die Kennung des Mitglieds und den Vornamen für die Anrede.
 
 ## Dateien
 
 - `index.html` – Seite, Formularadresse und Schlüssel der Forms-Fragen
 - `preis.js` – Preise und Rechenregel
 - `test/preis.test.js` – Prüfung der Rechenregel: `node test/preis.test.js`
-- `bilder/` – Wappen und Flaschenfotos
+- `bilder/` – Wappen, Flaschenfoto, freigestellte Flaschen (PNG) und das Vorschaubild für geteilte Links
+
+Die freigestellten Flaschen erzeugt `C41 SERVINO Flaschen freistellen.py` im Vault (`03 Bereiche/Club C41/SERVINO/`).
+
+Der persönliche Link je Mitglied kommt aus `C41 SERVINO Links erzeugen.py` im selben Ordner: `?m=Nr.%2018%20Meissl&n=Hanspeter`. `n` ist der Vorname für die Anrede auf der Seite.
 
 Preise und Regel stehen außerdem in der Auswertung im Vault
 (`03 Bereiche/Club C41/SERVINO/C41 SERVINO auswerten.py`) und im Text des Forms-Formulars.

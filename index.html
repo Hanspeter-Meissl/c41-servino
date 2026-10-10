@@ -5,6 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>SERVINO bestellen · Club 41</title>
+<meta name="description" content="Dein persönlicher Bestelllink für SERVINO, den Wein der sieben Grieskirchner Serviceclubs. Bestellschluss 5. November 2026.">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="de_AT">
+<meta property="og:site_name" content="Club 41 Grieskirchen-Hausruck">
+<meta property="og:title" content="SERVINO bestellen · Club 41">
+<meta property="og:description" content="Dein persönlicher Bestelllink für SERVINO, den Wein der sieben Grieskirchner Serviceclubs. Bestellschluss 5. November 2026.">
+<meta property="og:url" content="https://hanspeter-meissl.github.io/c41-servino/">
+<meta property="og:image" content="https://hanspeter-meissl.github.io/c41-servino/bilder/vorschau.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Servizzante, Servino Red Seven und Servino White Seven">
+<meta name="twitter:card" content="summary_large_image">
 <style>
   :root {
     --navy: #1F3864; --gold: #C0975B; --ink: #1D2733; --grau: #6B7683;
@@ -22,7 +34,9 @@
   header .club { font-weight: 700; color: var(--navy); line-height: 1.2; }
   header .jahr { font-size: 12px; letter-spacing: .12em; color: var(--gold); font-weight: 700; }
   h1 { font: 400 30px/1.2 Georgia, serif; color: var(--navy); margin: 22px 0 6px; }
-  .fuer { color: var(--grau); margin: 0 0 14px; }
+  .anrede { font-size: 18px; margin: 4px 0 6px; }
+  .anrede b { color: var(--navy); }
+  .fuer { color: var(--grau); margin: 0 0 14px; font-size: 14px; }
   .fuer b { color: var(--navy); }
   .titelbild { width: 100%; border-radius: 6px; display: block; margin: 8px 0 14px; }
   p { margin: 0 0 12px; }
@@ -75,6 +89,7 @@
   </header>
 
   <h1>SERVINO bestellen</h1>
+  <p class="anrede" id="anrede" hidden></p>
   <p class="fuer" id="fuer" hidden>Bestellung für <b id="mitglied"></b></p>
   <img class="titelbild" src="bilder/flaschen.jpg" alt="Servizzante, Servino Red Seven und Servino White Seven">
   <p>SERVINO ist der Wein der sieben Grieskirchner Serviceclubs, abgefüllt vom Weingut Hagn. Der Erlös geht an karitative Zwecke.</p>
@@ -112,10 +127,20 @@
     white: "r0c85a05c00d74dcda0296c65fcb44628",
     anmerkung: "rb1cfc2a4105f45869430fe99bfda317f",
   };
-  const BILD = { servizzante: "servizzante.jpg", red: "red.jpg", white: "white.jpg" };
+  const BILD = { servizzante: "servizzante.png", red: "red.png", white: "white.png" };
 
   const euro = n => n.toLocaleString("de-AT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
-  const mitglied = new URLSearchParams(location.search).get("m") || "";
+  // Persönlicher Link: ?m=Nr.%2018%20Meissl&n=Hanspeter
+  // m ist die Kennung für Forms und die Auswertung, n der Vorname für die Anrede.
+  const parameter = new URLSearchParams(location.search);
+  const mitglied = (parameter.get("m") || "").slice(0, 80);
+  const vorname = (parameter.get("n") || "").slice(0, 40);
+  if (vorname) {
+    const anrede = document.getElementById("anrede");
+    anrede.append("Lieber ", Object.assign(document.createElement("b"), { textContent: vorname }),
+                  ", hier kannst du deinen SERVINO bestellen.");
+    anrede.hidden = false;
+  }
   if (mitglied) {
     document.getElementById("mitglied").textContent = mitglied;
     document.getElementById("fuer").hidden = false;
