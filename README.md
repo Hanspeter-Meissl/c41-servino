@@ -4,16 +4,20 @@ Bestellseite für SERVINO, den Wein der sieben Grieskirchner Serviceclubs, für 
 des Club 41 Grieskirchen-Hausruck. Veröffentlicht über GitHub Pages.
 
 Die Seite rechnet während der Eingabe Zeilenpreise und Bestellsumme und prüft die
-Mindestbestellung von 6 Flaschen. „Bestellung abschließen“ öffnet das Microsoft-Forms-Formular
-„SERVINO-Bestellung bestätigen“ als Bestätigungsseite: Mitglied, Mengen und Bestellsumme sind
-vorausgefüllt, das Mitglied tippt nur noch auf „Absenden“.
-Die Bestellungen kommen damit nur in Forms an, die Seite speichert nichts.
+Mindestbestellung von 6 Flaschen. „Bestellung prüfen“ zeigt die Bestellung mit allen Preisen
+noch einmal, „Bestellung abschicken“ schickt sie an die Google-Web-App „SERVINO Bestellannahme“
+(Konstante `GOOGLE` in `index.html`, Quelle `03 Bereiche/Club C41/SERVINO/Google/Code.gs` im Vault).
+Die Web-App prüft das Mitglied und schreibt eine Zeile in die Google-Tabelle „SERVINO Bestellungen 2026“.
+
+Ersatzweg ist das Microsoft-Forms-Formular „SERVINO-Bestellung bestätigen“: Die Seite bietet es an,
+wenn Google nicht antwortet oder der Link keine Kennung trägt, und nutzt es ganz, wenn `GOOGLE` leer ist.
+Die Auswertung liest beide Quellen, es gilt die letzte Bestellung je Mitglied.
 
 Der persönliche Link trägt die Kennung des Mitglieds und den Vornamen für die Anrede.
 
 ## Dateien
 
-- `index.html` – Seite, Formularadresse und Schlüssel der Forms-Fragen
+- `index.html` – Seite, Adresse der Google-Web-App, Formularadresse und Schlüssel der Forms-Fragen
 - `preis.js` – Preise und Rechenregel
 - `test/preis.test.js` – Prüfung der Rechenregel: `node test/preis.test.js`
 - `bilder/` – Wappen, Flaschenfoto, freigestellte Flaschen (PNG) und das Vorschaubild für geteilte Links

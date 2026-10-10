@@ -63,7 +63,7 @@
   .summe .wert { font-size: 24px; font-weight: 700; color: var(--navy); font-variant-numeric: tabular-nums; }
   .flaschen { color: var(--grau); font-size: 14px; margin-bottom: 10px; }
   .hinweis { background: var(--warn-hell); color: var(--warn); padding: 10px 12px; border-radius: 6px; font-size: 14px; margin: 8px 0; }
-  .hinweis[hidden] { display: none; }
+  [hidden] { display: none !important; }
 
   label.anm { display: block; font-weight: 700; color: var(--navy); margin: 18px 0 6px; }
   textarea { width: 100%; min-height: 70px; padding: 8px 10px; border: 1px solid var(--linie); border-radius: 6px; font: inherit; }
@@ -73,6 +73,18 @@
   .los:disabled { background: #A9B3C1; cursor: not-allowed; }
   .naechst { font-size: 14px; color: var(--grau); }
   .nichts { display: inline-block; margin-top: 14px; color: var(--navy); font-size: 14px; }
+  h2 { font: 400 24px/1.25 Georgia, serif; color: var(--navy); margin: 24px 0 6px; }
+  .fuer2 { color: var(--grau); margin: 0 0 12px; font-size: 14px; }
+  .liste { width: 100%; border-collapse: collapse; border-top: 3px solid var(--gold); margin: 6px 0 12px; }
+  .liste td { padding: 10px 0; border-bottom: 1px solid var(--linie); vertical-align: top; }
+  .liste td.betrag { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 700; color: var(--navy); padding-left: 12px; }
+  .liste .name { font-weight: 700; color: var(--navy); }
+  .liste .weg { font-size: 13px; color: var(--grau); }
+  .liste tr.gesamt td { border-top: 3px solid var(--navy); border-bottom: 0; font-size: 18px; font-weight: 700; color: var(--navy); }
+  .anm-anzeige { font-size: 14px; color: var(--grau); background: var(--hell); padding: 10px 12px; border-radius: 6px; }
+  .zurueck { display: block; width: 100%; margin: 0 0 8px; padding: 13px; border: 1px solid var(--navy); border-radius: 6px;
+             background: #fff; color: var(--navy); font-family: inherit; font-size: 16px; font-weight: 600; cursor: pointer; }
+  .los.sendet { background: #A9B3C1; cursor: progress; }
   footer { margin-top: 28px; padding-top: 12px; border-top: 1px solid var(--linie); font-size: 13px; color: var(--grau); }
   @media (max-width: 380px) {
     .sorte { grid-template-columns: 36px 1fr; }
@@ -91,6 +103,7 @@
   <h1>SERVINO bestellen</h1>
   <p class="anrede" id="anrede" hidden></p>
   <p class="fuer" id="fuer" hidden>Bestellung für <b id="mitglied"></b></p>
+  <div id="einleitung">
   <img class="titelbild" src="bilder/flaschen.jpg" alt="Servizzante, Servino Red Seven und Servino White Seven">
   <p>SERVINO ist der Wein der sieben Grieskirchner Serviceclubs, abgefüllt vom Weingut Hagn. Der Erlös geht an karitative Zwecke.</p>
 
@@ -98,7 +111,9 @@
     <p>Für jeden vollen Karton mit 6 Flaschen derselben Sorte gilt der Kartonpreis. Gemischte Flaschen kosten den Einzelpreis. Die Mindestbestellung sind 6 Flaschen.</p>
     <p>Bestellschluss ist Donnerstag, 5. November 2026. Abholung und Verkostung beim Meeting am 12. November. Den Betrag bucht Christian ab.</p>
   </div>
+  </div>
 
+  <section id="schritt-bestellen">
   <div id="sorten"></div>
 
   <div class="summe"><span class="text">Bestellsumme</span><span class="wert" id="summe">0,00 €</span></div>
@@ -109,8 +124,27 @@
   <textarea id="anmerkung" maxlength="500" autocomplete="off"></textarea>
 
   <button class="los" id="los" disabled>Bestellung abschließen</button>
-  <p class="naechst">Danach siehst du deine Bestellung mit der Summe noch einmal zur Bestätigung. Mit „Absenden“ ist sie bei uns eingegangen. Fragt die Bestätigungsseite nach einem früheren Entwurf, wähle „Neuer Entwurf“, damit deine aktuellen Mengen übernommen werden.</p>
+  <p class="naechst" id="naechst">Danach siehst du deine Bestellung mit der Summe noch einmal zur Bestätigung. Mit „Absenden“ ist sie bei uns eingegangen. Fragt die Bestätigungsseite nach einem früheren Entwurf, wähle „Neuer Entwurf“, damit deine aktuellen Mengen übernommen werden.</p>
   <a class="nichts" href="#" id="nichts">Ich bestelle diesmal nichts</a>
+  </section>
+
+  <section id="schritt-pruefen" hidden>
+    <h2>Deine Bestellung</h2>
+    <p class="fuer2" id="pruefen-fuer"></p>
+    <table class="liste" id="liste"></table>
+    <p class="anm-anzeige" id="anm-anzeige" hidden></p>
+    <button class="los" id="abschicken">Bestellung abschicken</button>
+    <button class="zurueck" id="zurueck">Zurück zur Bestellung</button>
+    <div class="hinweis" id="fehler" hidden></div>
+    <a class="nichts" id="ersatz" href="#" hidden>Stattdessen über das Microsoft-Formular bestellen</a>
+  </section>
+
+  <section id="schritt-danke" hidden>
+    <h2 id="danke-titel">Danke!</h2>
+    <p id="danke-text"></p>
+    <table class="liste" id="danke-liste"></table>
+    <p class="naechst">Bis zum Bestellschluss am 5. November kannst du deinen Link aus der Mail noch einmal öffnen und neu bestellen. Es gilt deine letzte Bestellung.</p>
+  </section>
 
   <footer>Fragen zur Bestellung beantwortet dir Hanspeter.</footer>
 </main>
@@ -241,9 +275,128 @@
     location.href = teile.join("&");
   }
 
-  document.getElementById("los").onclick = () =>
-    weiter(rechnen(), document.getElementById("anmerkung").value.trim());
-  document.getElementById("nichts").onclick = e => { e.preventDefault(); weiter([0, 0, 0], ""); };
+  // ------------------------------------------------------------------ Weg über Google
+  // Ist GOOGLE gesetzt, prüft das Mitglied die Bestellung auf dieser Seite und schickt sie an die
+  // Google-Web-App (SERVINO/Google/Code.gs im Vault). Forms bleibt der Ersatzweg, wenn Google nicht
+  // antwortet oder der Link keine Kennung trägt. Ist GOOGLE leer, gilt der Weg über Forms.
+  const GOOGLE = "https://script.google.com/macros/s/AKfycbxrpLE-n05GKRHxjkIAXKUmWlY8BvoF48I0rv86AxDBCa286xgrbnlYFOsn_rJ1kIWANw/exec";
+
+  const schritte = ["schritt-bestellen", "schritt-pruefen", "schritt-danke"];
+  function zeige(id) {
+    schritte.forEach(s => { document.getElementById(s).hidden = s !== id; });
+    // Foto und Einleitung nur beim Bestellen, damit Prüfung und Dank oben stehen.
+    document.getElementById("einleitung").hidden = id !== "schritt-bestellen";
+    window.scrollTo(0, 0);
+  }
+
+  function liste(tabelle, mengen) {
+    const b = bestellung(mengen);
+    tabelle.replaceChildren();
+    const zeile = (links, rechts, klasse) => {
+      const tr = tabelle.insertRow();
+      if (klasse) tr.className = klasse;
+      const a = tr.insertCell(), z = tr.insertCell();
+      a.append(...links);
+      z.className = "betrag";
+      z.textContent = rechts;
+    };
+    const el = (tag, klasse, text) => Object.assign(document.createElement(tag), { className: klasse, textContent: text });
+    if (!b.flaschen) {
+      zeile([el("span", "name", "Keine Bestellung")], "");
+      return b;
+    }
+    SORTEN.forEach((s, i) => {
+      if (!mengen[i]) return;
+      zeile([el("div", "name", `${mengen[i]} × ${s.name}`), el("div", "weg", weg(s, b.zeilen[i]))], euro(b.zeilen[i].betrag));
+    });
+    zeile([el("span", "", `Summe für ${b.flaschen} Flaschen`)], euro(b.summe), "gesamt");
+    return b;
+  }
+
+  let entwurf = null;  // die Bestellung, die gerade geprüft wird
+  function pruefen(mengen, anmerkung) {
+    merken(mengen, anmerkung);
+    entwurf = { mengen, anmerkung };
+    document.getElementById("pruefen-fuer").textContent = mitglied ? `für ${mitglied}` : "";
+    liste(document.getElementById("liste"), mengen);
+    const anm = document.getElementById("anm-anzeige");
+    anm.hidden = !anmerkung;
+    anm.textContent = anmerkung ? `Anmerkung: ${anmerkung}` : "";
+    const knopf = document.getElementById("abschicken");
+    knopf.textContent = mengen.some(n => n) ? "Bestellung abschicken" : "Keine Bestellung abschicken";
+    knopf.disabled = false;
+    knopf.classList.remove("sendet");
+    document.getElementById("fehler").hidden = true;
+    document.getElementById("ersatz").hidden = true;
+    zeige("schritt-pruefen");
+    if (!mitglied) fehlschlag("Diese Seite wurde ohne deinen persönlichen Link geöffnet. Bitte nimm den Link aus deiner Mail oder bestelle über das Microsoft-Formular.");
+  }
+
+  function fehlschlag(text) {
+    const f = document.getElementById("fehler");
+    f.textContent = text;
+    f.hidden = false;
+    document.getElementById("ersatz").hidden = false;
+    const knopf = document.getElementById("abschicken");
+    knopf.disabled = !mitglied;
+    knopf.classList.remove("sendet");
+    if (mitglied) knopf.textContent = "Noch einmal versuchen";
+  }
+
+  async function abschicken() {
+    const knopf = document.getElementById("abschicken");
+    if (knopf.disabled || !entwurf) return;
+    knopf.disabled = true;  // Sperre gleich am Klick, damit nichts doppelt ankommt
+    knopf.classList.add("sendet");
+    knopf.textContent = "Wird gesendet …";
+    document.getElementById("fehler").hidden = true;
+    const { mengen, anmerkung } = entwurf;
+    const daten = { mitglied, servizzante: mengen[0], red: mengen[1], white: mengen[2],
+                    summe: summentext(mengen), anmerkung };
+    const abbruch = new AbortController();
+    const uhr = setTimeout(() => abbruch.abort(), 25000);
+    try {
+      // Ohne eigenen Content-Type geht die Anfrage als einfacher Text, ohne Vorabfrage des Browsers.
+      const antwort = await fetch(GOOGLE, { method: "POST", body: JSON.stringify(daten), signal: abbruch.signal });
+      const ergebnis = await antwort.json();
+      if (!ergebnis.ok) throw new Error(ergebnis.fehler || "abgelehnt");
+      danke(mengen);
+    } catch (e) {
+      fehlschlag("Die Bestellung ist nicht angekommen. Bitte versuche es noch einmal oder nimm den Weg über das Microsoft-Formular.");
+    } finally {
+      clearTimeout(uhr);
+    }
+  }
+
+  function danke(mengen) {
+    const bestellt = mengen.some(n => n);
+    document.getElementById("danke-titel").textContent = vorname ? `Danke, ${vorname}!` : "Danke!";
+    document.getElementById("danke-text").textContent = bestellt
+      ? "Deine SERVINO-Bestellung ist eingegangen. Abholen kannst du den Wein beim Meeting am 12. November, dort wird er auch verkostet. Den Betrag bucht Christian ab."
+      : "Wir haben vermerkt, dass du diesmal nichts bestellst. Du bekommst keine Erinnerung.";
+    liste(document.getElementById("danke-liste"), mengen);
+    document.getElementById("danke-liste").hidden = !bestellt;
+    zeige("schritt-danke");
+  }
+
+  if (GOOGLE) {
+    document.getElementById("los").textContent = "Bestellung prüfen";
+    document.getElementById("naechst").textContent =
+      "Danach siehst du deine Bestellung mit allen Preisen noch einmal und schickst sie ab.";
+    document.getElementById("los").onclick = () =>
+      pruefen(rechnen(), document.getElementById("anmerkung").value.trim());
+    document.getElementById("nichts").onclick = e => { e.preventDefault(); pruefen([0, 0, 0], ""); };
+  } else {
+    document.getElementById("los").onclick = () =>
+      weiter(rechnen(), document.getElementById("anmerkung").value.trim());
+    document.getElementById("nichts").onclick = e => { e.preventDefault(); weiter([0, 0, 0], ""); };
+  }
+  document.getElementById("abschicken").onclick = abschicken;
+  document.getElementById("zurueck").onclick = () => zeige("schritt-bestellen");
+  document.getElementById("ersatz").onclick = e => {
+    e.preventDefault();
+    if (entwurf) weiter(entwurf.mengen, entwurf.anmerkung);
+  };
   wiederherstellen();
   rechnen();
   // Rückkehr aus dem Zwischenspeicher des Browsers: Merker einsetzen und neu rechnen.
