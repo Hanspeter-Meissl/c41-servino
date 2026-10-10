@@ -108,8 +108,8 @@
   <label class="anm" for="anmerkung">Anmerkung (freiwillig)</label>
   <textarea id="anmerkung" maxlength="500"></textarea>
 
-  <button class="los" id="los" disabled>Weiter zur Bestellung</button>
-  <p class="naechst">Danach öffnet sich das Bestellformular mit deinen Angaben. Dort nur noch auf „Absenden“ klicken.</p>
+  <button class="los" id="los" disabled>Bestellung abschließen</button>
+  <p class="naechst">Danach siehst du deine Bestellung mit der Summe noch einmal zur Bestätigung. Mit „Absenden“ ist sie bei uns eingegangen.</p>
   <a class="nichts" href="#" id="nichts">Ich bestelle diesmal nichts</a>
 
   <footer>Fragen zur Bestellung beantwortet dir Hanspeter.</footer>
@@ -117,7 +117,8 @@
 
 <script src="preis.js"></script>
 <script>
-  // Microsoft-Forms-Formular „SERVINO-Bestellung Club 41“ und die Schlüssel seiner Fragen.
+  // Microsoft-Forms-Formular „SERVINO-Bestellung bestätigen“ und die Schlüssel seiner Fragen.
+  // Forms dient nur noch als Bestätigungsseite: Mengen und Summe kommen vorausgefüllt an.
   // Die Schlüssel ändern sich, wenn eine Frage gelöscht und neu angelegt wird.
   const FORMULAR = "https://forms.cloud.microsoft/Pages/ResponsePage.aspx?id=Po3f5MegNUOLAZflW2XD0bEWBUv9Oq9NlxGO4srwulVUMDhDWTEwWjhLUjFSMUdJTEtQMzZJUklQQS4u";
   const FELD = {
@@ -125,6 +126,7 @@
     servizzante: "r824f3af70b274fee9162d8c21eecdbf6",
     red: "r92444713871748e0922a02eb657644df",
     white: "r0c85a05c00d74dcda0296c65fcb44628",
+    summe: "red650beb55d445608d7f16d5d5579c5a",
     anmerkung: "rb1cfc2a4105f45869430fe99bfda317f",
   };
   const BILD = { servizzante: "servizzante.png", red: "red.png", white: "white.png" };
@@ -199,10 +201,20 @@
     return mengen;
   }
 
+  // Text für das Feld „Bestellsumme“ der Bestätigungsseite, z. B. „166,00 € für 10 Flaschen
+  // (2 Servizzante, 8 Servino Red Seven)“. Die Auswertung rechnet selbst und liest das Feld nicht.
+  function summentext(mengen) {
+    const b = bestellung(mengen);
+    if (!b.flaschen) return "keine Bestellung";
+    const teile = SORTEN.map((s, i) => mengen[i] ? `${mengen[i]} ${s.name}` : "").filter(Boolean);
+    return `${euro(b.summe)} für ${b.flaschen} Flaschen (${teile.join(", ")})`;
+  }
+
   function weiter(mengen, anmerkung) {
     const teile = [FORMULAR];
     if (mitglied) teile.push(`${FELD.mitglied}=${encodeURIComponent(mitglied)}`);
     SORTEN.forEach((s, i) => teile.push(`${FELD[s.schluessel]}=${mengen[i]}`));
+    teile.push(`${FELD.summe}=${encodeURIComponent(summentext(mengen))}`);
     if (anmerkung) teile.push(`${FELD.anmerkung}=${encodeURIComponent(anmerkung)}`);
     location.href = teile.join("&");
   }

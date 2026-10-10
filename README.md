@@ -4,8 +4,9 @@ Bestellseite für SERVINO, den Wein der sieben Grieskirchner Serviceclubs, für 
 des Club 41 Grieskirchen-Hausruck. Veröffentlicht über GitHub Pages.
 
 Die Seite rechnet während der Eingabe Zeilenpreise und Bestellsumme und prüft die
-Mindestbestellung von 6 Flaschen. „Weiter zur Bestellung“ öffnet das Microsoft-Forms-Formular
-„SERVINO-Bestellung Club 41“ mit allen Angaben vorausgefüllt; dort schickt das Mitglied ab.
+Mindestbestellung von 6 Flaschen. „Bestellung abschließen“ öffnet das Microsoft-Forms-Formular
+„SERVINO-Bestellung bestätigen“ als Bestätigungsseite: Mitglied, Mengen und Bestellsumme sind
+vorausgefüllt, das Mitglied tippt nur noch auf „Absenden“.
 Die Bestellungen kommen damit nur in Forms an, die Seite speichert nichts.
 
 Der persönliche Link trägt die Kennung des Mitglieds und den Vornamen für die Anrede.
