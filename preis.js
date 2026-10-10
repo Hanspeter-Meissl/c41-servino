@@ -8,7 +8,7 @@
 const SORTEN = [
   { schluessel: "servizzante", name: "Servizzante", art: "Frizzante", einzel: 16, karton: 13 },
   { schluessel: "red", name: "Servino Red Seven", art: "Rotwein", einzel: 19, karton: 16 },
-  { schluessel: "white", name: "Servino White Seven", art: "Weißwein", einzel: 19, karton: 16 },
+  { schluessel: "white", name: "Servino White Seven", art: "Weißwein", einzel: 16, karton: 13 },
 ];
 const MINDESTMENGE = 6;
 
