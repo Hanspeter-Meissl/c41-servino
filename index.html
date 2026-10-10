@@ -106,7 +106,7 @@
   <div class="hinweis" id="hinweis" hidden></div>
 
   <label class="anm" for="anmerkung">Anmerkung (freiwillig)</label>
-  <textarea id="anmerkung" maxlength="500"></textarea>
+  <textarea id="anmerkung" maxlength="500" autocomplete="off"></textarea>
 
   <button class="los" id="los" disabled>Bestellung abschließen</button>
   <p class="naechst">Danach siehst du deine Bestellung mit der Summe noch einmal zur Bestätigung. Mit „Absenden“ ist sie bei uns eingegangen. Fragt die Bestätigungsseite nach einem früheren Entwurf, wähle „Neuer Entwurf“, damit deine aktuellen Mengen übernommen werden.</p>
@@ -158,7 +158,7 @@
         <div class="preise">${s.einzel} € je Flasche · Karton ${s.karton * 6} €</div></div>
       <div class="stepper">
         <button type="button" aria-label="${s.name} eine Flasche weniger">−</button>
-        <input type="number" inputmode="numeric" min="0" max="120" value="0" aria-label="${s.name} Flaschen">
+        <input type="number" inputmode="numeric" min="0" max="120" value="0" autocomplete="off" aria-label="${s.name} Flaschen">
         <button type="button" aria-label="${s.name} eine Flasche mehr">+</button>
       </div>
       <div class="betrag" style="grid-column: 2 / -1"><span class="weg"></span> <span class="wert">0,00 €</span></div>`;
@@ -201,16 +201,38 @@
     return mengen;
   }
 
-  // Text für das Feld „Bestellsumme“ der Bestätigungsseite, z. B. „166,00 € für 10 Flaschen
-  // (2 Servizzante, 8 Servino Red Seven)“. Die Auswertung rechnet selbst und liest das Feld nicht.
+  // Text für das mehrzeilige Feld „Bestellsumme“ der Bestätigungsseite, je Sorte eine Zeile mit
+  // Menge, Rechenweg und Betrag, zuletzt die Summe. Die Auswertung rechnet selbst und liest das Feld nicht.
+  //   Servizzante: 2 Flaschen, 2 × 16 € = 32,00 €
+  //   Servino Red Seven: 8 Flaschen, 1 Karton à 96 € + 2 × 19 € = 134,00 €
+  //   Summe: 166,00 € für 10 Flaschen
   function summentext(mengen) {
     const b = bestellung(mengen);
     if (!b.flaschen) return "keine Bestellung";
-    const teile = SORTEN.map((s, i) => mengen[i] ? `${mengen[i]} ${s.name}` : "").filter(Boolean);
-    return `${euro(b.summe)} für ${b.flaschen} Flaschen (${teile.join(", ")})`;
+    const zeilen = SORTEN.map((s, i) => mengen[i]
+      ? `${s.name}: ${mengen[i]} Flasche${mengen[i] === 1 ? "" : "n"}, ${weg(s, b.zeilen[i])} = ${euro(b.zeilen[i].betrag)}`
+      : "").filter(Boolean);
+    zeilen.push(`Summe: ${euro(b.summe)} für ${b.flaschen} Flaschen`);
+    return zeilen.join("\n");
+  }
+
+  // Die Bestellung für die Rückkehr mit der Zurück-Taste merken. Der Browser stellt Feldinhalte
+  // sonst erst nach dem ersten Rechnen wieder her, und die Summe zeigte 0,00 €.
+  const MERKER = "servino-bestellung";
+  function merken(mengen, anmerkung) {
+    try { sessionStorage.setItem(MERKER, JSON.stringify({ mitglied, mengen, anmerkung })); } catch (e) {}
+  }
+  function wiederherstellen() {
+    try {
+      const g = JSON.parse(sessionStorage.getItem(MERKER) || "null");
+      if (!g || g.mitglied !== mitglied) return;
+      felder.forEach((f, i) => { f.eingabe.value = g.mengen[i] || 0; });
+      document.getElementById("anmerkung").value = g.anmerkung || "";
+    } catch (e) {}
   }
 
   function weiter(mengen, anmerkung) {
+    merken(mengen, anmerkung);
     const teile = [FORMULAR];
     if (mitglied) teile.push(`${FELD.mitglied}=${encodeURIComponent(mitglied)}`);
     SORTEN.forEach((s, i) => teile.push(`${FELD[s.schluessel]}=${mengen[i]}`));
@@ -222,7 +244,10 @@
   document.getElementById("los").onclick = () =>
     weiter(rechnen(), document.getElementById("anmerkung").value.trim());
   document.getElementById("nichts").onclick = e => { e.preventDefault(); weiter([0, 0, 0], ""); };
+  wiederherstellen();
   rechnen();
+  // Rückkehr aus dem Zwischenspeicher des Browsers: Merker einsetzen und neu rechnen.
+  window.addEventListener("pageshow", () => { wiederherstellen(); rechnen(); });
 </script>
 </body>
 </html>
