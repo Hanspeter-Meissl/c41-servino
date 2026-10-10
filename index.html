@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>SERVINO bestellen · Club 41</title>
+<style>
+  :root {
+    --navy: #1F3864; --gold: #C0975B; --ink: #1D2733; --grau: #6B7683;
+    --linie: #DCE1E8; --hell: #F4F6F9; --warn: #9A3412; --warn-hell: #FFF4E5;
+    --rand: 16px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #fff; color: var(--ink);
+    font: 16px/1.5 "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  }
+  main { max-width: 640px; margin: 0 auto; padding: 0 var(--rand) 40px; }
+  header { display: flex; align-items: center; gap: 12px; padding: 16px 0 12px; border-bottom: 3px solid var(--navy); }
+  header img { width: 48px; height: 48px; }
+  header .club { font-weight: 700; color: var(--navy); line-height: 1.2; }
+  header .jahr { font-size: 12px; letter-spacing: .12em; color: var(--gold); font-weight: 700; }
+  h1 { font: 400 30px/1.2 Georgia, serif; color: var(--navy); margin: 22px 0 6px; }
+  .fuer { color: var(--grau); margin: 0 0 14px; }
+  .fuer b { color: var(--navy); }
+  .titelbild { width: 100%; border-radius: 6px; display: block; margin: 8px 0 14px; }
+  p { margin: 0 0 12px; }
+  .regel { background: var(--hell); border-top: 3px solid var(--gold); padding: 12px 14px; font-size: 14px; margin: 16px 0 20px; }
+  .regel p { margin: 0 0 6px; } .regel p:last-child { margin: 0; }
+
+  .sorte { display: grid; grid-template-columns: 44px 1fr auto; gap: 4px 12px; align-items: center;
+           padding: 14px 0; border-bottom: 1px solid var(--linie); }
+  .sorte img { grid-row: span 2; width: 44px; height: 140px; object-fit: contain; }
+  .sorte .name { font-weight: 700; color: var(--navy); }
+  .sorte .art { font-size: 13px; color: var(--grau); }
+  .sorte .preise { font-size: 13px; color: var(--grau); }
+  .stepper { display: flex; align-items: center; gap: 6px; }
+  .stepper button { width: 38px; height: 38px; border: 1px solid var(--linie); background: #fff; border-radius: 6px;
+                    font-size: 20px; color: var(--navy); cursor: pointer; }
+  .stepper input { width: 52px; height: 38px; text-align: center; font-size: 17px; border: 1px solid var(--linie); border-radius: 6px; }
+  .betrag { text-align: right; font-variant-numeric: tabular-nums; }
+  .betrag .wert { font-weight: 700; color: var(--navy); }
+  .betrag .weg { font-size: 12px; color: var(--grau); }
+
+  .summe { display: flex; justify-content: space-between; align-items: baseline; padding: 16px 0 6px;
+           border-top: 3px solid var(--navy); margin-top: -1px; }
+  .summe .text { font-weight: 700; color: var(--navy); }
+  .summe .wert { font-size: 24px; font-weight: 700; color: var(--navy); font-variant-numeric: tabular-nums; }
+  .flaschen { color: var(--grau); font-size: 14px; margin-bottom: 10px; }
+  .hinweis { background: var(--warn-hell); color: var(--warn); padding: 10px 12px; border-radius: 6px; font-size: 14px; margin: 8px 0; }
+  .hinweis[hidden] { display: none; }
+
+  label.anm { display: block; font-weight: 700; color: var(--navy); margin: 18px 0 6px; }
+  textarea { width: 100%; min-height: 70px; padding: 8px 10px; border: 1px solid var(--linie); border-radius: 6px; font: inherit; }
+
+  .los { display: block; width: 100%; margin: 18px 0 8px; padding: 14px; border: 0; border-radius: 6px;
+         background: var(--navy); color: #fff; font-family: inherit; font-size: 17px; font-weight: 700; cursor: pointer; }
+  .los:disabled { background: #A9B3C1; cursor: not-allowed; }
+  .naechst { font-size: 14px; color: var(--grau); }
+  .nichts { display: inline-block; margin-top: 14px; color: var(--navy); font-size: 14px; }
+  footer { margin-top: 28px; padding-top: 12px; border-top: 1px solid var(--linie); font-size: 13px; color: var(--grau); }
+  @media (max-width: 380px) {
+    .sorte { grid-template-columns: 36px 1fr; }
+    .sorte img { width: 36px; height: 120px; grid-row: span 3; }
+    .betrag { text-align: left; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <img src="bilder/logo.jpg" alt="Wappen Club 41">
+    <div><div class="club">Club 41 Grieskirchen-Hausruck</div><div class="jahr">CLUBJAHR 2026 / 2027</div></div>
+  </header>
+
+  <h1>SERVINO bestellen</h1>
+  <p class="fuer" id="fuer" hidden>Bestellung für <b id="mitglied"></b></p>
+  <img class="titelbild" src="bilder/flaschen.jpg" alt="Servizzante, Servino Red Seven und Servino White Seven">
+  <p>SERVINO ist der Wein der sieben Grieskirchner Serviceclubs, abgefüllt vom Weingut Hagn. Der Erlös geht an karitative Zwecke.</p>
+
+  <div class="regel">
+    <p>Für jeden vollen Karton mit 6 Flaschen derselben Sorte gilt der Kartonpreis. Gemischte Flaschen kosten den Einzelpreis. Die Mindestbestellung sind 6 Flaschen.</p>
+    <p>Bestellschluss ist Donnerstag, 5. November 2026. Abholung und Verkostung beim Meeting am 12. November. Den Betrag bucht Christian ab.</p>
+  </div>
+
+  <div id="sorten"></div>
+
+  <div class="summe"><span class="text">Bestellsumme</span><span class="wert" id="summe">0,00 €</span></div>
+  <div class="flaschen" id="flaschen">0 Flaschen</div>
+  <div class="hinweis" id="hinweis" hidden></div>
+
+  <label class="anm" for="anmerkung">Anmerkung (freiwillig)</label>
+  <textarea id="anmerkung" maxlength="500"></textarea>
+
+  <button class="los" id="los" disabled>Weiter zur Bestellung</button>
+  <p class="naechst">Danach öffnet sich das Bestellformular mit deinen Angaben. Dort nur noch auf „Absenden“ klicken.</p>
+  <a class="nichts" href="#" id="nichts">Ich bestelle diesmal nichts</a>
+
+  <footer>Fragen zur Bestellung beantwortet dir Hanspeter.</footer>
+</main>
+
+<script src="preis.js"></script>
+<script>
+  // Microsoft-Forms-Formular „SERVINO-Bestellung Club 41“ und die Schlüssel seiner Fragen.
+  // Die Schlüssel ändern sich, wenn eine Frage gelöscht und neu angelegt wird.
+  const FORMULAR = "https://forms.cloud.microsoft/Pages/ResponsePage.aspx?id=Po3f5MegNUOLAZflW2XD0bEWBUv9Oq9NlxGO4srwulVUMDhDWTEwWjhLUjFSMUdJTEtQMzZJUklQQS4u";
+  const FELD = {
+    mitglied: "r19d170477a7243dda1b8d7aa098e3eea",
+    servizzante: "r824f3af70b274fee9162d8c21eecdbf6",
+    red: "r92444713871748e0922a02eb657644df",
+    white: "r0c85a05c00d74dcda0296c65fcb44628",
+    anmerkung: "rb1cfc2a4105f45869430fe99bfda317f",
+  };
+  const BILD = { servizzante: "servizzante.jpg", red: "red.jpg", white: "white.jpg" };
+
+  const euro = n => n.toLocaleString("de-AT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+  const mitglied = new URLSearchParams(location.search).get("m") || "";
+  if (mitglied) {
+    document.getElementById("mitglied").textContent = mitglied;
+    document.getElementById("fuer").hidden = false;
+  }
+
+  const behaelter = document.getElementById("sorten");
+  const felder = SORTEN.map(s => {
+    const zeile = document.createElement("div");
+    zeile.className = "sorte";
+    zeile.innerHTML = `
+      <img src="bilder/${BILD[s.schluessel]}" alt="${s.name}">
+      <div><div class="name">${s.name}</div><div class="art">${s.art}</div>
+        <div class="preise">${s.einzel} € je Flasche · Karton ${s.karton * 6} €</div></div>
+      <div class="stepper">
+        <button type="button" aria-label="${s.name} eine Flasche weniger">−</button>
+        <input type="number" inputmode="numeric" min="0" max="120" value="0" aria-label="${s.name} Flaschen">
+        <button type="button" aria-label="${s.name} eine Flasche mehr">+</button>
+      </div>
+      <div class="betrag" style="grid-column: 2 / -1"><span class="weg"></span> <span class="wert">0,00 €</span></div>`;
+    behaelter.appendChild(zeile);
+    const [minus, plus] = zeile.querySelectorAll("button");
+    const eingabe = zeile.querySelector("input");
+    const setze = n => { eingabe.value = Math.max(0, Math.min(120, n)); rechnen(); };
+    minus.onclick = () => setze(menge(eingabe) - 1);
+    plus.onclick = () => setze(menge(eingabe) + 1);
+    eingabe.oninput = rechnen;
+    return { eingabe, weg: zeile.querySelector(".weg"), wert: zeile.querySelector(".wert") };
+  });
+
+  function menge(eingabe) {
+    const n = parseInt(eingabe.value, 10);
+    return Number.isFinite(n) && n > 0 ? Math.min(n, 120) : 0;
+  }
+
+  function weg(sorte, z) {
+    const teile = [];
+    if (z.kartons) teile.push(`${z.kartons} Karton${z.kartons > 1 ? "s" : ""} à ${sorte.karton * 6} €`);
+    if (z.rest) teile.push(`${z.rest} × ${sorte.einzel} €`);
+    return teile.join(" + ");
+  }
+
+  function rechnen() {
+    const mengen = felder.map(f => menge(f.eingabe));
+    const b = bestellung(mengen);
+    felder.forEach((f, i) => {
+      f.weg.textContent = mengen[i] ? weg(SORTEN[i], b.zeilen[i]) : "";
+      f.wert.textContent = euro(b.zeilen[i].betrag);
+    });
+    document.getElementById("summe").textContent = euro(b.summe);
+    document.getElementById("flaschen").textContent = `${b.flaschen} Flasche${b.flaschen === 1 ? "" : "n"}`;
+    const hinweis = document.getElementById("hinweis");
+    hinweis.hidden = !b.fehlen;
+    hinweis.textContent = b.fehlen
+      ? `Die Mindestbestellung sind ${MINDESTMENGE} Flaschen. Es fehlen noch ${b.fehlen}.` : "";
+    document.getElementById("los").disabled = b.flaschen === 0 || b.fehlen > 0;
+    return mengen;
+  }
+
+  function weiter(mengen, anmerkung) {
+    const teile = [FORMULAR];
+    if (mitglied) teile.push(`${FELD.mitglied}=${encodeURIComponent(mitglied)}`);
+    SORTEN.forEach((s, i) => teile.push(`${FELD[s.schluessel]}=${mengen[i]}`));
+    if (anmerkung) teile.push(`${FELD.anmerkung}=${encodeURIComponent(anmerkung)}`);
+    location.href = teile.join("&");
+  }
+
+  document.getElementById("los").onclick = () =>
+    weiter(rechnen(), document.getElementById("anmerkung").value.trim());
+  document.getElementById("nichts").onclick = e => { e.preventDefault(); weiter([0, 0, 0], ""); };
+  rechnen();
+</script>
+</body>
+</html>
