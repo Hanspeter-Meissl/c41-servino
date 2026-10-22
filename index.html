@@ -87,6 +87,9 @@
   .los.sendet { background: #A9B3C1; cursor: progress; }
   .bisher-zeile { background: var(--hell); border-left: 3px solid var(--navy); padding: 8px 12px; font-size: 14px; margin: 0 0 12px; }
   .bisher-zeile a { color: var(--navy); font-weight: 700; }
+  .frueher { margin-top: 22px; padding-top: 10px; border-top: 1px solid var(--linie); font-size: 14px; color: var(--grau); }
+  .frueher p { margin: 0 0 6px; }
+  .frueher b { color: var(--navy); }
   footer { margin-top: 28px; padding-top: 12px; border-top: 1px solid var(--linie); font-size: 13px; color: var(--grau); }
   @media (max-width: 380px) {
     .sorte { grid-template-columns: 36px 1fr; }
@@ -124,6 +127,7 @@
     <div class="hinweis" id="bisher-pruefen" hidden></div>
     <p id="bisher-text"></p>
     <button class="los" id="aendern" hidden>Bestellung ändern</button>
+    <div class="frueher" id="bisher-frueher" hidden></div>
   </section>
 
   <section id="schritt-bestellen">
@@ -142,7 +146,7 @@
   </section>
 
   <section id="schritt-pruefen" hidden>
-    <h2>Deine Bestellung</h2>
+    <h2 id="pruefen-titel">Deine Bestellung</h2>
     <p class="fuer2" id="pruefen-fuer"></p>
     <table class="liste" id="liste"></table>
     <p class="anm-anzeige" id="anm-anzeige" hidden></p>
@@ -156,7 +160,7 @@
     <h2 id="danke-titel">Danke!</h2>
     <p id="danke-text"></p>
     <table class="liste" id="danke-liste"></table>
-    <p class="naechst">Über deinen Link aus der Mail siehst du deine Bestellung jederzeit. Bis zum Bestellschluss am 5. November kannst du dort auch neu bestellen. Es gilt deine letzte Bestellung.</p>
+    <p class="naechst">Über deinen Link aus der Mail siehst du deine Bestellung jederzeit. Bis zur Abholung kannst du sie dort noch ändern. Es gilt deine letzte Bestellung.</p>
   </section>
 
   <footer>Fragen zur Bestellung beantwortet dir Hanspeter.</footer>
@@ -311,6 +315,7 @@
     // Foto und Einleitung nur beim Bestellen, damit Prüfung und Dank oben stehen.
     document.getElementById("einleitung").hidden = id !== "schritt-bestellen";
     document.getElementById("bisher-zeile").hidden = id !== "schritt-bestellen" || !bisherZeile;
+    document.getElementById("nichts").hidden = neueBestellung;  // nach der Abholung gibt es nichts abzusagen
     anredeSetzen(id === "schritt-bisher" ? bisherAnrede : ANREDE_BESTELLEN);
     window.scrollTo(0, 0);
   }
@@ -344,6 +349,7 @@
     merken(mengen, anmerkung);
     entwurf = { mengen, anmerkung };
     document.getElementById("pruefen-fuer").textContent = mitglied ? `für ${mitglied}` : "";
+    document.getElementById("pruefen-titel").textContent = neueBestellung ? "Deine neue Bestellung" : "Deine Bestellung";
     liste(document.getElementById("liste"), mengen);
     const anm = document.getElementById("anm-anzeige");
     anm.hidden = !anmerkung;
@@ -387,6 +393,8 @@
       const ergebnis = await antwort.json();
       if (!ergebnis.ok) throw new Error(ergebnis.fehler || "abgelehnt");
       gesendet = true;
+      // Sonst stünde beim nächsten Öffnen im selben Tab das Formular statt der Übersicht.
+      try { sessionStorage.removeItem(MERKER); } catch (e) {}
       danke(mengen);
     } catch (e) {
       fehlschlag("Die Bestellung ist nicht angekommen. Bitte versuche es noch einmal oder nimm den Weg über das Microsoft-Formular.");
@@ -398,8 +406,12 @@
   function danke(mengen) {
     const bestellt = mengen.some(n => n);
     document.getElementById("danke-titel").textContent = vorname ? `Danke, ${vorname}!` : "Danke!";
+    // Bis zum Meeting am 12. November gilt die Ausgabe dort, danach nennt Hanspeter den Termin.
+    const ausgabe = new Date() < new Date("2026-11-13T00:00:00")
+      ? "Abholen kannst du den Wein beim Meeting am 12. November, dort wird er auch verkostet."
+      : "Wann du den Wein abholen kannst, sagt dir Hanspeter.";
     document.getElementById("danke-text").textContent = bestellt
-      ? "Deine SERVINO-Bestellung ist eingegangen. Abholen kannst du den Wein beim Meeting am 12. November, dort wird er auch verkostet. Den Betrag bucht Christian ab."
+      ? `Deine ${neueBestellung ? "neue " : ""}SERVINO-Bestellung ist eingegangen. ${ausgabe} Den Betrag bucht Christian ab.`
       : "Wir haben vermerkt, dass du diesmal nichts bestellst. Du bekommst keine Erinnerung.";
     liste(document.getElementById("danke-liste"), mengen);
     document.getElementById("danke-liste").hidden = !bestellt;
@@ -413,6 +425,7 @@
   let bisherZeile = "";   // Text der Zeile über dem Bestellformular, leer heißt ausgeblendet
   let gesendet = false;   // nach dem Abschicken gilt die neue Bestellung, die geladene nicht mehr
   let bisherAnrede = "";  // Anrede über der abgeschickten Bestellung
+  let neueBestellung = false;  // nach einer Abholung: das Formular nimmt eine neue Bestellung auf
 
   function zeitText(t) {
     const m = String(t).match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2})/);
@@ -426,14 +439,19 @@
     z.hidden = !inhalt || schritt !== "schritt-bestellen";
   }
 
+  // Oben die geltende Bestellung. Vor der Abholung lässt sie sich ändern, nach der Abholung gibt es eine
+  // neue Bestellung mit leerem Formular. Frühere, schon abgeholte Bestellungen stehen kurz darunter.
   function bisherZeigen(b) {
-    const offen = new Date() <= new Date(String(b.schluss).replace(" ", "T"));
+    const zu = !!b.ende && new Date() > new Date(String(b.ende).replace(" ", "T"));
     const bestellt = b.status === "bestellt";
-    bisherAnrede = b.status === "keine Bestellung"
+    const keine = b.status === "keine Bestellung";
+    const abgeholt = bestellt && !!b.abgeholt;
+    const neu = (b.nummer || 1) > 1;
+    bisherAnrede = keine
       ? "danke für deine Rückmeldung."
       : "danke für deine Bestellung. Hier siehst du, was du bestellt hast.";
-    document.getElementById("bisher-titel").textContent =
-      b.status === "keine Bestellung" ? "Keine Bestellung" : "Deine SERVINO-Bestellung";
+    document.getElementById("bisher-titel").textContent = keine ? (neu ? "Keine neue Bestellung" : "Keine Bestellung")
+      : neu ? "Deine neue SERVINO-Bestellung" : "Deine SERVINO-Bestellung";
     const zeit = zeitText(b.zeit);
     document.getElementById("bisher-zeit").textContent = zeit
       ? (b.status === "keine Bestellung" ? `Vermerkt am ${zeit}` : `Abgeschickt am ${zeit}`) : "";
@@ -447,24 +465,35 @@
       + (b.flaschen > 0 && b.flaschen < MINDESTMENGE ? `, weil die Mindestbestellung ${MINDESTMENGE} Flaschen sind` : "")
       + ". Hanspeter meldet sich bei dir.";
     let text;
-    if (bestellt && b.abgeholt) text = `Du hast deinen Wein am ${zeitText(b.abgeholt)} abgeholt.`;
-    else if (!offen) text = bestellt
-      ? "Der Bestellschluss ist vorbei. Abholen kannst du den Wein beim Meeting am 12. November, den Betrag bucht Christian ab."
-      : "Der Bestellschluss ist vorbei.";
-    else if (b.status === "keine Bestellung") text = "Du hast vermerkt, dass du diesmal nichts bestellst. Bis zum Bestellschluss am 5. November kannst du doch noch bestellen.";
-    else text = "Bis zum Bestellschluss am 5. November kannst du deine Bestellung ändern. Es gilt deine letzte Bestellung.";
+    if (abgeholt) text = `Du hast deinen Wein am ${zeitText(b.abgeholt)} abgeholt.`
+      + (zu ? "" : " Wenn du noch mehr möchtest, gib einfach eine neue Bestellung auf.");
+    else if (zu) text = "Die Bestellung ist abgeschlossen.";
+    else if (keine) text = "Du hast vermerkt, dass du diesmal nichts bestellst. Du kannst trotzdem noch bestellen.";
+    else text = "Bis zur Abholung kannst du deine Bestellung noch ändern. Es gilt deine letzte Bestellung.";
     document.getElementById("bisher-text").textContent = text;
     const knopf = document.getElementById("aendern");
-    knopf.hidden = !offen || !!(bestellt && b.abgeholt);
-    knopf.textContent = b.status === "keine Bestellung" ? "Doch bestellen" : "Bestellung ändern";
+    knopf.hidden = zu;
+    knopf.textContent = abgeholt ? "Neue Bestellung" : keine ? "Doch bestellen" : "Bestellung ändern";
     knopf.onclick = () => {
-      // Mengen und Anmerkung der abgeschickten Bestellung als Ausgangspunkt
-      felder.forEach((f, i) => { f.eingabe.value = b.mengen[i] || 0; });
-      document.getElementById("anmerkung").value = b.anmerkung || "";
+      // Ändern beginnt bei der abgeschickten Bestellung, eine neue Bestellung bei 0.
+      neueBestellung = abgeholt;
+      felder.forEach((f, i) => { f.eingabe.value = abgeholt ? 0 : b.mengen[i] || 0; });
+      document.getElementById("anmerkung").value = abgeholt ? "" : b.anmerkung || "";
       angefasst = true;
       rechnen();
       zeige("schritt-bestellen");
     };
+    // Frühere Bestellungen sind immer abgeholt, sonst gäbe es keine spätere.
+    const frueher = document.getElementById("bisher-frueher");
+    const alte = (b.abschnitte || []).slice(0, -1);
+    frueher.hidden = !alte.length;
+    frueher.replaceChildren(...alte.map(a => {
+      const p = document.createElement("p");
+      const sorten = SORTEN.map((s, i) => a.mengen[i] ? `${a.mengen[i]} × ${s.name}` : "").filter(Boolean).join(", ");
+      p.append(Object.assign(document.createElement("b"), { textContent: `Abgeholt am ${zeitText(a.abgeholt).split(" um ")[0]}: ` }),
+               `${sorten}, ${euro(bestellung(a.mengen).summe)}`);
+      return p;
+    }));
     zeige("schritt-bisher");
   }
 
