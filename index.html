@@ -466,14 +466,14 @@
       + ". Hanspeter meldet sich bei dir.";
     let text;
     if (abgeholt) text = `Du hast deinen Wein am ${zeitText(b.abgeholt)} abgeholt.`
-      + (zu ? "" : " Wenn du noch mehr möchtest, gib einfach eine neue Bestellung auf.");
+      + (zu ? "" : " Wenn du noch mehr möchtest, gib einfach eine zusätzliche Bestellung auf.");
     else if (zu) text = "Die Bestellung ist abgeschlossen.";
     else if (keine) text = "Du hast vermerkt, dass du diesmal nichts bestellst. Du kannst trotzdem noch bestellen.";
     else text = "Bis zur Abholung kannst du deine Bestellung noch ändern. Es gilt deine letzte Bestellung.";
     document.getElementById("bisher-text").textContent = text;
     const knopf = document.getElementById("aendern");
     knopf.hidden = zu;
-    knopf.textContent = abgeholt ? "Neue Bestellung" : keine ? "Doch bestellen" : "Bestellung ändern";
+    knopf.textContent = abgeholt ? "Zusätzliche Bestellung" : keine ? "Doch bestellen" : "Bestellung ändern";
     knopf.onclick = () => {
       // Ändern beginnt bei der abgeschickten Bestellung, eine neue Bestellung bei 0.
       neueBestellung = abgeholt;
