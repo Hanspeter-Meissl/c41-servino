@@ -184,12 +184,15 @@
   const parameter = new URLSearchParams(location.search);
   const mitglied = (parameter.get("m") || "").slice(0, 80);
   const vorname = (parameter.get("n") || "").slice(0, 40);
-  if (vorname) {
+  // Beim Bestellen „hier kannst du …“, in der Ansicht der abgeschickten Bestellung der Dank.
+  const ANREDE_BESTELLEN = "hier kannst du deinen SERVINO bestellen.";
+  function anredeSetzen(text) {
+    if (!vorname) return;
     const anrede = document.getElementById("anrede");
-    anrede.append("Lieber ", Object.assign(document.createElement("b"), { textContent: vorname }),
-                  ", hier kannst du deinen SERVINO bestellen.");
+    anrede.replaceChildren("Lieber ", Object.assign(document.createElement("b"), { textContent: vorname }), ", " + text);
     anrede.hidden = false;
   }
+  anredeSetzen(ANREDE_BESTELLEN);
   if (mitglied) {
     document.getElementById("mitglied").textContent = mitglied;
     document.getElementById("fuer").hidden = false;
@@ -308,6 +311,7 @@
     // Foto und Einleitung nur beim Bestellen, damit Prüfung und Dank oben stehen.
     document.getElementById("einleitung").hidden = id !== "schritt-bestellen";
     document.getElementById("bisher-zeile").hidden = id !== "schritt-bestellen" || !bisherZeile;
+    anredeSetzen(id === "schritt-bisher" ? bisherAnrede : ANREDE_BESTELLEN);
     window.scrollTo(0, 0);
   }
 
@@ -408,6 +412,7 @@
   // bleibt es beim leeren Bestellformular wie bisher.
   let bisherZeile = "";   // Text der Zeile über dem Bestellformular, leer heißt ausgeblendet
   let gesendet = false;   // nach dem Abschicken gilt die neue Bestellung, die geladene nicht mehr
+  let bisherAnrede = "";  // Anrede über der abgeschickten Bestellung
 
   function zeitText(t) {
     const m = String(t).match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2})/);
@@ -424,6 +429,9 @@
   function bisherZeigen(b) {
     const offen = new Date() <= new Date(String(b.schluss).replace(" ", "T"));
     const bestellt = b.status === "bestellt";
+    bisherAnrede = b.status === "keine Bestellung"
+      ? "danke für deine Rückmeldung."
+      : "danke für deine Bestellung. Hier siehst du, was du bestellt hast.";
     document.getElementById("bisher-titel").textContent =
       b.status === "keine Bestellung" ? "Keine Bestellung" : "Deine SERVINO-Bestellung";
     const zeit = zeitText(b.zeit);
