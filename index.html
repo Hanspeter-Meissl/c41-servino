@@ -85,6 +85,8 @@
   .zurueck { display: block; width: 100%; margin: 0 0 8px; padding: 13px; border: 1px solid var(--navy); border-radius: 6px;
              background: #fff; color: var(--navy); font-family: inherit; font-size: 16px; font-weight: 600; cursor: pointer; }
   .los.sendet { background: #A9B3C1; cursor: progress; }
+  .bisher-zeile { background: var(--hell); border-left: 3px solid var(--navy); padding: 8px 12px; font-size: 14px; margin: 0 0 12px; }
+  .bisher-zeile a { color: var(--navy); font-weight: 700; }
   footer { margin-top: 28px; padding-top: 12px; border-top: 1px solid var(--linie); font-size: 13px; color: var(--grau); }
   @media (max-width: 380px) {
     .sorte { grid-template-columns: 36px 1fr; }
@@ -103,6 +105,7 @@
   <h1>SERVINO bestellen</h1>
   <p class="anrede" id="anrede" hidden></p>
   <p class="fuer" id="fuer" hidden>Bestellung für <b id="mitglied"></b></p>
+  <p class="bisher-zeile" id="bisher-zeile" hidden></p>
   <div id="einleitung">
   <img class="titelbild" src="bilder/flaschen.jpg" alt="Servizzante, Servino Red Seven und Servino White Seven">
   <p>SERVINO ist der Wein der sieben Grieskirchner Serviceclubs, abgefüllt vom Weingut Hagn. Der Erlös geht an karitative Zwecke.</p>
@@ -112,6 +115,16 @@
     <p>Bestellschluss ist Donnerstag, 5. November 2026. Abholung und Verkostung beim Meeting am 12. November. Den Betrag bucht Christian ab.</p>
   </div>
   </div>
+
+  <section id="schritt-bisher" hidden>
+    <h2 id="bisher-titel">Deine Bestellung</h2>
+    <p class="fuer2" id="bisher-zeit"></p>
+    <table class="liste" id="bisher-liste"></table>
+    <p class="anm-anzeige" id="bisher-anm" hidden></p>
+    <div class="hinweis" id="bisher-pruefen" hidden></div>
+    <p id="bisher-text"></p>
+    <button class="los" id="aendern" hidden>Bestellung ändern</button>
+  </section>
 
   <section id="schritt-bestellen">
   <div id="sorten"></div>
@@ -143,7 +156,7 @@
     <h2 id="danke-titel">Danke!</h2>
     <p id="danke-text"></p>
     <table class="liste" id="danke-liste"></table>
-    <p class="naechst">Bis zum Bestellschluss am 5. November kannst du deinen Link aus der Mail noch einmal öffnen und neu bestellen. Es gilt deine letzte Bestellung.</p>
+    <p class="naechst">Über deinen Link aus der Mail siehst du deine Bestellung jederzeit. Bis zum Bestellschluss am 5. November kannst du dort auch neu bestellen. Es gilt deine letzte Bestellung.</p>
   </section>
 
   <footer>Fragen zur Bestellung beantwortet dir Hanspeter.</footer>
@@ -182,6 +195,11 @@
     document.getElementById("fuer").hidden = false;
   }
 
+  // Hat das Mitglied schon Mengen oder eine Anmerkung eingegeben, springt die Seite nicht mehr
+  // von selbst zur abgeschickten Bestellung, wenn diese nachträglich geladen ist.
+  let angefasst = false;
+  document.getElementById("anmerkung").addEventListener("input", () => { angefasst = true; });
+
   const behaelter = document.getElementById("sorten");
   const felder = SORTEN.map(s => {
     const zeile = document.createElement("div");
@@ -199,10 +217,10 @@
     behaelter.appendChild(zeile);
     const [minus, plus] = zeile.querySelectorAll("button");
     const eingabe = zeile.querySelector("input");
-    const setze = n => { eingabe.value = Math.max(0, Math.min(120, n)); rechnen(); };
+    const setze = n => { eingabe.value = Math.max(0, Math.min(120, n)); angefasst = true; rechnen(); };
     minus.onclick = () => setze(menge(eingabe) - 1);
     plus.onclick = () => setze(menge(eingabe) + 1);
-    eingabe.oninput = rechnen;
+    eingabe.oninput = () => { angefasst = true; rechnen(); };
     return { eingabe, weg: zeile.querySelector(".weg"), wert: zeile.querySelector(".wert") };
   });
 
@@ -262,6 +280,7 @@
       if (!g || g.mitglied !== mitglied) return;
       felder.forEach((f, i) => { f.eingabe.value = g.mengen[i] || 0; });
       document.getElementById("anmerkung").value = g.anmerkung || "";
+      if (g.mengen.some(n => n) || g.anmerkung) angefasst = true;
     } catch (e) {}
   }
 
@@ -281,11 +300,14 @@
   // antwortet oder der Link keine Kennung trägt. Ist GOOGLE leer, gilt der Weg über Forms.
   const GOOGLE = "https://script.google.com/macros/s/AKfycbxrpLE-n05GKRHxjkIAXKUmWlY8BvoF48I0rv86AxDBCa286xgrbnlYFOsn_rJ1kIWANw/exec";
 
-  const schritte = ["schritt-bestellen", "schritt-pruefen", "schritt-danke"];
+  const schritte = ["schritt-bisher", "schritt-bestellen", "schritt-pruefen", "schritt-danke"];
+  let schritt = "schritt-bestellen";
   function zeige(id) {
+    schritt = id;
     schritte.forEach(s => { document.getElementById(s).hidden = s !== id; });
     // Foto und Einleitung nur beim Bestellen, damit Prüfung und Dank oben stehen.
     document.getElementById("einleitung").hidden = id !== "schritt-bestellen";
+    document.getElementById("bisher-zeile").hidden = id !== "schritt-bestellen" || !bisherZeile;
     window.scrollTo(0, 0);
   }
 
@@ -360,6 +382,7 @@
       const antwort = await fetch(GOOGLE, { method: "POST", body: JSON.stringify(daten), signal: abbruch.signal });
       const ergebnis = await antwort.json();
       if (!ergebnis.ok) throw new Error(ergebnis.fehler || "abgelehnt");
+      gesendet = true;
       danke(mengen);
     } catch (e) {
       fehlschlag("Die Bestellung ist nicht angekommen. Bitte versuche es noch einmal oder nimm den Weg über das Microsoft-Formular.");
@@ -377,6 +400,87 @@
     liste(document.getElementById("danke-liste"), mengen);
     document.getElementById("danke-liste").hidden = !bestellt;
     zeige("schritt-danke");
+  }
+
+  // ------------------------------------------------------------------ Abgeschickte Bestellung
+  // Beim Öffnen über den persönlichen Link fragt die Seite die Bestellung ab, die für das Mitglied
+  // gilt (Code.gs, eigeneBestellung). Bestellen geht währenddessen weiter. Scheitert die Abfrage,
+  // bleibt es beim leeren Bestellformular wie bisher.
+  let bisherZeile = "";   // Text der Zeile über dem Bestellformular, leer heißt ausgeblendet
+  let gesendet = false;   // nach dem Abschicken gilt die neue Bestellung, die geladene nicht mehr
+
+  function zeitText(t) {
+    const m = String(t).match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2})/);
+    return m ? `${m[3]}.${m[2]}.${m[1]} um ${m[4]}` : "";
+  }
+
+  function zeileSetzen(inhalt) {
+    const z = document.getElementById("bisher-zeile");
+    bisherZeile = inhalt;
+    z.replaceChildren(...(Array.isArray(inhalt) ? inhalt : [inhalt]));
+    z.hidden = !inhalt || schritt !== "schritt-bestellen";
+  }
+
+  function bisherZeigen(b) {
+    const offen = new Date() <= new Date(String(b.schluss).replace(" ", "T"));
+    const bestellt = b.status === "bestellt";
+    document.getElementById("bisher-titel").textContent =
+      b.status === "keine Bestellung" ? "Keine Bestellung" : "Deine SERVINO-Bestellung";
+    const zeit = zeitText(b.zeit);
+    document.getElementById("bisher-zeit").textContent = zeit
+      ? (b.status === "keine Bestellung" ? `Vermerkt am ${zeit}` : `Abgeschickt am ${zeit}`) : "";
+    liste(document.getElementById("bisher-liste"), b.mengen);
+    const anm = document.getElementById("bisher-anm");
+    anm.hidden = !b.anmerkung;
+    anm.textContent = b.anmerkung ? `Anmerkung: ${b.anmerkung}` : "";
+    const pruefen = document.getElementById("bisher-pruefen");
+    pruefen.hidden = b.status !== "prüfen";
+    pruefen.textContent = "Deine Bestellung ist eingegangen, muss aber noch geklärt werden"
+      + (b.flaschen > 0 && b.flaschen < MINDESTMENGE ? `, weil die Mindestbestellung ${MINDESTMENGE} Flaschen sind` : "")
+      + ". Hanspeter meldet sich bei dir.";
+    let text;
+    if (bestellt && b.abgeholt) text = `Du hast deinen Wein am ${zeitText(b.abgeholt)} abgeholt.`;
+    else if (!offen) text = bestellt
+      ? "Der Bestellschluss ist vorbei. Abholen kannst du den Wein beim Meeting am 12. November, den Betrag bucht Christian ab."
+      : "Der Bestellschluss ist vorbei.";
+    else if (b.status === "keine Bestellung") text = "Du hast vermerkt, dass du diesmal nichts bestellst. Bis zum Bestellschluss am 5. November kannst du doch noch bestellen.";
+    else text = "Bis zum Bestellschluss am 5. November kannst du deine Bestellung ändern. Es gilt deine letzte Bestellung.";
+    document.getElementById("bisher-text").textContent = text;
+    const knopf = document.getElementById("aendern");
+    knopf.hidden = !offen || !!(bestellt && b.abgeholt);
+    knopf.textContent = b.status === "keine Bestellung" ? "Doch bestellen" : "Bestellung ändern";
+    knopf.onclick = () => {
+      // Mengen und Anmerkung der abgeschickten Bestellung als Ausgangspunkt
+      felder.forEach((f, i) => { f.eingabe.value = b.mengen[i] || 0; });
+      document.getElementById("anmerkung").value = b.anmerkung || "";
+      angefasst = true;
+      rechnen();
+      zeige("schritt-bestellen");
+    };
+    zeige("schritt-bisher");
+  }
+
+  async function bisherLaden() {
+    if (!GOOGLE || !mitglied) return;
+    zeileSetzen("Deine bisherige Bestellung wird geladen …");
+    const abbruch = new AbortController();
+    const uhr = setTimeout(() => abbruch.abort(), 20000);
+    try {
+      const antwort = await fetch(`${GOOGLE}?bestellung=${encodeURIComponent(mitglied)}`, { signal: abbruch.signal });
+      const b = await antwort.json();
+      // Nur die drei Fälle mit Antwort anzeigen; „offen“ oder eine Web-App ohne diesen Abruf liefern keinen davon.
+      if (gesendet || !b.ok || !["bestellt", "prüfen", "keine Bestellung"].includes(b.status)) return zeileSetzen("");
+      const link = Object.assign(document.createElement("a"), { href: "#", textContent: "Ansehen" });
+      link.onclick = e => { e.preventDefault(); bisherZeigen(b); };
+      const was = b.status === "keine Bestellung" ? "vermerkt, dass du nichts bestellst" : "bereits bestellt";
+      const zeit = zeitText(b.zeit);
+      zeileSetzen([`Du hast ${zeit ? "am " + zeit.replace(" um ", ", ") + " " : ""}${was}. `, link]);
+      if (!angefasst && schritt === "schritt-bestellen") bisherZeigen(b);
+    } catch (e) {
+      zeileSetzen("");
+    } finally {
+      clearTimeout(uhr);
+    }
   }
 
   if (GOOGLE) {
@@ -399,6 +503,7 @@
   };
   wiederherstellen();
   rechnen();
+  bisherLaden();
   // Rückkehr aus dem Zwischenspeicher des Browsers: Merker einsetzen und neu rechnen.
   window.addEventListener("pageshow", () => { wiederherstellen(); rechnen(); });
 </script>
