@@ -349,7 +349,7 @@
     merken(mengen, anmerkung);
     entwurf = { mengen, anmerkung };
     document.getElementById("pruefen-fuer").textContent = mitglied ? `für ${mitglied}` : "";
-    document.getElementById("pruefen-titel").textContent = neueBestellung ? "Deine neue Bestellung" : "Deine Bestellung";
+    document.getElementById("pruefen-titel").textContent = neueBestellung ? "Deine zusätzliche Bestellung" : "Deine Bestellung";
     liste(document.getElementById("liste"), mengen);
     const anm = document.getElementById("anm-anzeige");
     anm.hidden = !anmerkung;
@@ -411,7 +411,7 @@
       ? "Abholen kannst du den Wein beim Meeting am 12. November, dort wird er auch verkostet."
       : "Wann du den Wein abholen kannst, sagt dir Hanspeter.";
     document.getElementById("danke-text").textContent = bestellt
-      ? `Deine ${neueBestellung ? "neue " : ""}SERVINO-Bestellung ist eingegangen. ${ausgabe} Den Betrag bucht Christian ab.`
+      ? `Deine ${neueBestellung ? "zusätzliche " : ""}SERVINO-Bestellung ist eingegangen. ${ausgabe} Den Betrag bucht Christian ab.`
       : "Wir haben vermerkt, dass du diesmal nichts bestellst. Du bekommst keine Erinnerung.";
     liste(document.getElementById("danke-liste"), mengen);
     document.getElementById("danke-liste").hidden = !bestellt;
@@ -450,8 +450,8 @@
     bisherAnrede = keine
       ? "danke für deine Rückmeldung."
       : "danke für deine Bestellung. Hier siehst du, was du bestellt hast.";
-    document.getElementById("bisher-titel").textContent = keine ? (neu ? "Keine neue Bestellung" : "Keine Bestellung")
-      : neu ? "Deine neue SERVINO-Bestellung" : "Deine SERVINO-Bestellung";
+    document.getElementById("bisher-titel").textContent = keine ? (neu ? "Keine zusätzliche Bestellung" : "Keine Bestellung")
+      : neu ? "Deine zusätzliche SERVINO-Bestellung" : "Deine SERVINO-Bestellung";
     const zeit = zeitText(b.zeit);
     document.getElementById("bisher-zeit").textContent = zeit
       ? (b.status === "keine Bestellung" ? `Vermerkt am ${zeit}` : `Abgeschickt am ${zeit}`) : "";
