@@ -339,9 +339,17 @@
     // Foto und Einleitung nur beim Bestellen, damit Prüfung und Dank oben stehen.
     document.getElementById("einleitung").hidden = id !== "schritt-bestellen";
     document.getElementById("bisher-zeile").hidden = id !== "schritt-bestellen" || !bisherZeile;
-    document.getElementById("nichts").hidden = neueBestellung;  // nach der Abholung gibt es nichts abzusagen
+    nichtsSetzen();
     anredeSetzen(id === "schritt-bisher" ? bisherAnrede : ANREDE_BESTELLEN);
     window.scrollTo(0, 0);
+  }
+
+  // Nach der Abholung gibt es nichts abzusagen. Liegt eine Bestellung vor, storniert der Link sie.
+  function nichtsSetzen() {
+    const nichts = document.getElementById("nichts");
+    nichts.hidden = neueBestellung && !offeneBestellung;
+    nichts.textContent = !offeneBestellung ? "Ich bestelle diesmal nichts"
+      : neueBestellung ? "Zusätzliche Bestellung stornieren" : "Bestellung stornieren";
   }
 
   function liste(tabelle, mengen) {
@@ -374,13 +382,17 @@
     merken(mengen, anmerkung);
     entwurf = { mengen, anmerkung };
     document.getElementById("pruefen-fuer").textContent = mitglied ? `für ${mitglied}` : "";
-    document.getElementById("pruefen-titel").textContent = neueBestellung ? "Deine zusätzliche Bestellung" : "Deine Bestellung";
+    const storno = offeneBestellung && !mengen.some(n => n);
+    document.getElementById("pruefen-titel").textContent = storno
+      ? (neueBestellung ? "Zusätzliche Bestellung stornieren" : "Bestellung stornieren")
+      : neueBestellung ? "Deine zusätzliche Bestellung" : "Deine Bestellung";
     liste(document.getElementById("liste"), mengen);
     const anm = document.getElementById("anm-anzeige");
     anm.hidden = !anmerkung;
     anm.textContent = anmerkung ? `Anmerkung: ${anmerkung}` : "";
     const knopf = document.getElementById("abschicken");
-    knopf.textContent = mengen.some(n => n) ? "Bestellung abschicken" : "Ohne Bestellung abschließen";
+    knopf.textContent = mengen.some(n => n) ? "Bestellung abschicken"
+      : storno ? "Stornierung abschicken" : "Ohne Bestellung abschließen";
     knopf.disabled = false;
     knopf.classList.remove("sendet");
     document.getElementById("fehler").hidden = true;
@@ -437,6 +449,8 @@
       : "Wann du den Wein abholen kannst, sagt dir Hanspeter.";
     document.getElementById("danke-text").textContent = bestellt
       ? `Deine ${neueBestellung ? "zusätzliche " : ""}SERVINO-Bestellung ist eingegangen. ${ausgabe} Den Betrag bucht Christian ab.`
+      : offeneBestellung ? `Deine ${neueBestellung ? "zusätzliche " : ""}Bestellung ist storniert.`
+      : neueBestellung ? "Wir haben vermerkt, dass du nichts mehr dazubestellst."
       : "Wir haben vermerkt, dass du diesmal nichts bestellst. Du bekommst keine Erinnerung.";
     liste(document.getElementById("danke-liste"), mengen);
     document.getElementById("danke-liste").hidden = !bestellt;
@@ -451,6 +465,7 @@
   let gesendet = false;   // nach dem Abschicken gilt die neue Bestellung, die geladene nicht mehr
   let bisherAnrede = "";  // Anrede über der abgeschickten Bestellung
   let neueBestellung = false;  // nach einer Abholung: das Formular nimmt eine neue Bestellung auf
+  let offeneBestellung = false;  // eine Bestellung liegt vor und ist nicht abgeholt; 0 storniert sie
 
   function zeitText(t) {
     const m = String(t).match(/^(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2})/);
@@ -464,6 +479,15 @@
     z.hidden = !inhalt || schritt !== "schritt-bestellen";
   }
 
+  // Was das Formular aufnimmt, gesetzt beim Laden der abgeschickten Bestellung, nicht erst beim Klick:
+  // Wer schon tippt, bevor sie geladen ist, bleibt im Formular und braucht trotzdem die richtigen Texte.
+  function lageSetzen(b) {
+    const abgeholt = b.status === "bestellt" && !!b.abgeholt;
+    neueBestellung = abgeholt || (b.nummer || 1) > 1;
+    offeneBestellung = !abgeholt && ["bestellt", "prüfen"].includes(b.status);
+    nichtsSetzen();
+  }
+
   // Oben die geltende Bestellung. Vor der Abholung lässt sie sich ändern, nach der Abholung gibt es eine
   // neue Bestellung mit leerem Formular. Frühere, schon abgeholte Bestellungen stehen kurz darunter.
   function bisherZeigen(b) {
@@ -472,15 +496,24 @@
     const keine = b.status === "keine Bestellung";
     const abgeholt = bestellt && !!b.abgeholt;
     const neu = (b.nummer || 1) > 1;
-    bisherAnrede = keine
-      ? "danke für deine Rückmeldung."
+    const storniert = keine && !!b.storniert;  // bestellt und auf 0 gesetzt, nicht gleich „nichts“ gemeldet
+    // Frühere Bestellungen sind immer abgeholt, sonst gäbe es keine spätere.
+    const alte = (b.abschnitte || []).slice(0, -1);
+    const abholung = alte.length ? ` Deine ${alte.length > 1 ? "letzte " : ""}Bestellung hast du am `
+      + `${zeitText(alte[alte.length - 1].abgeholt).split(" um ")[0]} abgeholt.` : "";
+    bisherAnrede = keine && !neu && !storniert ? "danke für deine Rückmeldung."
+      : keine ? "hier ist der Stand deiner SERVINO-Bestellung."
       : "danke für deine Bestellung. Hier siehst du, was du bestellt hast.";
-    document.getElementById("bisher-titel").textContent = keine ? (neu ? "Keine zusätzliche Bestellung" : "Keine Bestellung")
+    document.getElementById("bisher-titel").textContent = storniert
+      ? (neu ? "Zusätzliche Bestellung storniert" : "Bestellung storniert")
+      : keine ? (neu ? "Keine zusätzliche Bestellung" : "Keine Bestellung")
       : neu ? "Deine zusätzliche SERVINO-Bestellung" : "Deine SERVINO-Bestellung";
     const zeit = zeitText(b.zeit);
-    document.getElementById("bisher-zeit").textContent = zeit
-      ? (b.status === "keine Bestellung" ? `Vermerkt am ${zeit}` : `Abgeschickt am ${zeit}`) : "";
-    liste(document.getElementById("bisher-liste"), b.mengen);
+    document.getElementById("bisher-zeit").textContent = !zeit ? ""
+      : storniert ? `Storniert am ${zeit}` : keine ? `Vermerkt am ${zeit}` : `Abgeschickt am ${zeit}`;
+    const tabelle = document.getElementById("bisher-liste");
+    liste(tabelle, b.mengen);
+    tabelle.hidden = keine && (storniert || neu);  // der Text sagt es schon, „Keine Bestellung“ wäre doppelt
     const anm = document.getElementById("bisher-anm");
     anm.hidden = !b.anmerkung;
     anm.textContent = b.anmerkung ? `Anmerkung: ${b.anmerkung}` : "";
@@ -493,24 +526,25 @@
     if (abgeholt) text = `Du hast deinen Wein am ${zeitText(b.abgeholt)} abgeholt.`
       + (zu ? "" : " Wenn du noch mehr möchtest, gib einfach eine zusätzliche Bestellung auf.");
     else if (zu) text = "Die Bestellung ist abgeschlossen.";
+    else if (storniert) text = neu ? `Deine zusätzliche Bestellung ist storniert.${abholung}`
+      : "Du hast deine Bestellung storniert. Du kannst jederzeit wieder bestellen.";
+    else if (keine && neu) text = `Du hast vermerkt, dass du nichts mehr dazubestellst.${abholung}`;
     else if (keine) text = "Du hast vermerkt, dass du diesmal nichts bestellst. Du kannst trotzdem noch bestellen.";
     else text = "Bis zur Abholung kannst du deine Bestellung noch ändern. Es gilt deine letzte Bestellung.";
     document.getElementById("bisher-text").textContent = text;
     const knopf = document.getElementById("aendern");
     knopf.hidden = zu;
-    knopf.textContent = abgeholt ? "Zusätzliche Bestellung" : keine ? "Doch bestellen" : "Bestellung ändern";
+    knopf.textContent = abgeholt || (keine && neu) ? "Zusätzliche Bestellung"
+      : storniert ? "Neu bestellen" : keine ? "Doch bestellen" : "Bestellung ändern";
     knopf.onclick = () => {
       // Ändern beginnt bei der abgeschickten Bestellung, eine neue Bestellung bei 0.
-      neueBestellung = abgeholt;
       felder.forEach((f, i) => { f.eingabe.value = abgeholt ? 0 : b.mengen[i] || 0; });
       document.getElementById("anmerkung").value = abgeholt ? "" : b.anmerkung || "";
       angefasst = true;
       rechnen();
       zeige("schritt-bestellen");
     };
-    // Frühere Bestellungen sind immer abgeholt, sonst gäbe es keine spätere.
     const frueher = document.getElementById("bisher-frueher");
-    const alte = (b.abschnitte || []).slice(0, -1);
     frueher.hidden = !alte.length;
     frueher.replaceChildren(...alte.map(a => {
       const p = document.createElement("p");
@@ -534,7 +568,11 @@
       if (gesendet || !b.ok || !["bestellt", "prüfen", "keine Bestellung"].includes(b.status)) return zeileSetzen("");
       const link = Object.assign(document.createElement("a"), { href: "#", textContent: "Ansehen" });
       link.onclick = e => { e.preventDefault(); bisherZeigen(b); };
-      const was = b.status === "keine Bestellung" ? "vermerkt, dass du nichts bestellst" : "bereits bestellt";
+      lageSetzen(b);
+      const neu = (b.nummer || 1) > 1;
+      const was = b.status !== "keine Bestellung" ? "bereits bestellt"
+        : b.storniert ? `deine ${neu ? "zusätzliche " : ""}Bestellung storniert`
+        : neu ? "vermerkt, dass du nichts mehr dazubestellst" : "vermerkt, dass du nichts bestellst";
       const zeit = zeitText(b.zeit);
       zeileSetzen([`Du hast ${zeit ? "am " + zeit.replace(" um ", ", ") + " " : ""}${was}. `, link]);
       if (!angefasst && schritt === "schritt-bestellen") bisherZeigen(b);
