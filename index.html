@@ -115,6 +115,7 @@
 
   <div class="regel">
     <p>Für jeden vollen Karton mit 6 Flaschen derselben Sorte gilt der Kartonpreis. Gemischte Flaschen kosten den Einzelpreis. Die Mindestbestellung sind 6 Flaschen.</p>
+    <p>Neu dazu gibt es das Wein-Geschenksackerl mit Sichtfenster um 1,90 € je Stück. Auch hier kommt der Erlös einem karitativen Zweck zugute.</p>
     <p>Bestellschluss ist Donnerstag, 5. November 2026. Abholung und Verkostung beim Meeting am 12. November. Den Betrag bucht Christian ab.</p>
   </div>
   </div>
@@ -179,8 +180,12 @@
     white: "r0c85a05c00d74dcda0296c65fcb44628",
     summe: "red650beb55d445608d7f16d5d5579c5a",
     anmerkung: "rb1cfc2a4105f45869430fe99bfda317f",
+    // Frage „Wein-Geschenksackerl (Stück)“, noch nicht im Formular. Solange leer, steht die Stückzahl
+    // in der Anmerkung und muss nach einer Bestellung über Forms von Hand nachgetragen werden.
+    sackerl: "",
   };
-  const BILD = { servizzante: "servizzante.png", red: "red.png", white: "white.png" };
+  const BILD = { servizzante: "servizzante.png", red: "red.png", white: "white.png", sackerl: "sackerl.png" };
+  const ARTIKEL = [...SORTEN, SACKERL];  // Reihenfolge wie in den Mengen
 
   const euro = n => n.toLocaleString("de-AT", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
   // Persönlicher Link: ?m=Nr.%2018%20Meissl&n=Hanspeter
@@ -208,17 +213,21 @@
   document.getElementById("anmerkung").addEventListener("input", () => { angefasst = true; });
 
   const behaelter = document.getElementById("sorten");
-  const felder = SORTEN.map(s => {
+  const felder = ARTIKEL.map(s => {
     const zeile = document.createElement("div");
     zeile.className = "sorte";
+    const sackerl = s === SACKERL;
+    const preise = sackerl ? `${euro(s.cent / 100)} je Stück. Auch hier kommt der Erlös einem karitativen Zweck zugute.`
+      : `${s.einzel} € je Flasche · Karton ${s.karton * 6} €`;
+    const [eins, viele] = sackerl ? ["ein Stück", "Stück"] : ["eine Flasche", "Flaschen"];
     zeile.innerHTML = `
       <img src="bilder/${BILD[s.schluessel]}" alt="${s.name}">
       <div><div class="name">${s.name}</div><div class="art">${s.art}</div>
-        <div class="preise">${s.einzel} € je Flasche · Karton ${s.karton * 6} €</div></div>
+        <div class="preise">${preise}</div></div>
       <div class="stepper">
-        <button type="button" aria-label="${s.name} eine Flasche weniger">−</button>
-        <input type="number" inputmode="numeric" min="0" max="120" value="0" autocomplete="off" aria-label="${s.name} Flaschen">
-        <button type="button" aria-label="${s.name} eine Flasche mehr">+</button>
+        <button type="button" aria-label="${s.name} ${eins} weniger">−</button>
+        <input type="number" inputmode="numeric" min="0" max="120" value="0" autocomplete="off" aria-label="${s.name} ${viele}">
+        <button type="button" aria-label="${s.name} ${eins} mehr">+</button>
       </div>
       <div class="betrag" style="grid-column: 2 / -1"><span class="weg"></span> <span class="wert">0,00 €</span></div>`;
     behaelter.appendChild(zeile);
@@ -242,21 +251,31 @@
     if (z.rest) teile.push(`${z.rest} × ${sorte.einzel} €`);
     return teile.join(" + ");
   }
+  const sackerlWeg = b => `${b.sackerl} × ${euro(SACKERL.cent / 100)}`;
+
+  // „8 Flaschen“, „8 Flaschen und 3 Sackerl“ oder „3 Sackerl“
+  function umfang(b) {
+    const teile = [];
+    if (b.flaschen || !b.sackerl) teile.push(`${b.flaschen} Flasche${b.flaschen === 1 ? "" : "n"}`);
+    if (b.sackerl) teile.push(`${b.sackerl} ${SACKERL.kurz}`);
+    return teile.join(" und ");
+  }
 
   function rechnen() {
     const mengen = felder.map(f => menge(f.eingabe));
     const b = bestellung(mengen);
     felder.forEach((f, i) => {
-      f.weg.textContent = mengen[i] ? weg(SORTEN[i], b.zeilen[i]) : "";
-      f.wert.textContent = euro(b.zeilen[i].betrag);
+      const sackerl = ARTIKEL[i] === SACKERL;
+      f.weg.textContent = !mengen[i] ? "" : sackerl ? sackerlWeg(b) : weg(SORTEN[i], b.zeilen[i]);
+      f.wert.textContent = euro(sackerl ? b.sackerlBetrag : b.zeilen[i].betrag);
     });
     document.getElementById("summe").textContent = euro(b.summe);
-    document.getElementById("flaschen").textContent = `${b.flaschen} Flasche${b.flaschen === 1 ? "" : "n"}`;
+    document.getElementById("flaschen").textContent = umfang(b);
     const hinweis = document.getElementById("hinweis");
     hinweis.hidden = !b.fehlen;
     hinweis.textContent = b.fehlen
       ? `Die Mindestbestellung sind ${MINDESTMENGE} Flaschen. Es fehlen noch ${b.fehlen}.` : "";
-    document.getElementById("los").disabled = b.flaschen === 0 || b.fehlen > 0;
+    document.getElementById("los").disabled = (b.flaschen === 0 && b.sackerl === 0) || b.fehlen > 0;
     return mengen;
   }
 
@@ -264,14 +283,16 @@
   // Menge, Rechenweg und Betrag, zuletzt die Summe. Die Auswertung rechnet selbst und liest das Feld nicht.
   //   Servizzante: 2 Flaschen, 2 × 16 € = 32,00 €
   //   Servino Red Seven: 8 Flaschen, 1 Karton à 96 € + 2 × 19 € = 134,00 €
-  //   Summe: 166,00 € für 10 Flaschen
+  //   Wein-Geschenksackerl: 3 Stück, 3 × 1,90 € = 5,70 €
+  //   Summe: 171,70 € für 10 Flaschen und 3 Sackerl
   function summentext(mengen) {
     const b = bestellung(mengen);
-    if (!b.flaschen) return "keine Bestellung";
+    if (!b.flaschen && !b.sackerl) return "keine Bestellung";
     const zeilen = SORTEN.map((s, i) => mengen[i]
       ? `${s.name}: ${mengen[i]} Flasche${mengen[i] === 1 ? "" : "n"}, ${weg(s, b.zeilen[i])} = ${euro(b.zeilen[i].betrag)}`
       : "").filter(Boolean);
-    zeilen.push(`Summe: ${euro(b.summe)} für ${b.flaschen} Flaschen`);
+    if (b.sackerl) zeilen.push(`${SACKERL.name}: ${b.sackerl} Stück, ${sackerlWeg(b)} = ${euro(b.sackerlBetrag)}`);
+    zeilen.push(`Summe: ${euro(b.summe)} für ${umfang(b)}`);
     return zeilen.join("\n");
   }
 
@@ -297,6 +318,9 @@
     if (mitglied) teile.push(`${FELD.mitglied}=${encodeURIComponent(mitglied)}`);
     SORTEN.forEach((s, i) => teile.push(`${FELD[s.schluessel]}=${mengen[i]}`));
     teile.push(`${FELD.summe}=${encodeURIComponent(summentext(mengen))}`);
+    const sackerl = mengen[SORTEN.length] || 0;
+    if (FELD.sackerl) teile.push(`${FELD.sackerl}=${sackerl}`);
+    else if (sackerl) anmerkung = `${sackerl} ${SACKERL.name}. ${anmerkung}`.trim();
     if (anmerkung) teile.push(`${FELD.anmerkung}=${encodeURIComponent(anmerkung)}`);
     location.href = teile.join("&");
   }
@@ -332,7 +356,7 @@
       z.textContent = rechts;
     };
     const el = (tag, klasse, text) => Object.assign(document.createElement(tag), { className: klasse, textContent: text });
-    if (!b.flaschen) {
+    if (!b.flaschen && !b.sackerl) {
       zeile([el("span", "name", "Keine Bestellung")], "");
       return b;
     }
@@ -340,7 +364,8 @@
       if (!mengen[i]) return;
       zeile([el("div", "name", `${mengen[i]} × ${s.name}`), el("div", "weg", weg(s, b.zeilen[i]))], euro(b.zeilen[i].betrag));
     });
-    zeile([el("span", "", `Summe für ${b.flaschen} Flaschen`)], euro(b.summe), "gesamt");
+    if (b.sackerl) zeile([el("div", "name", `${b.sackerl} × ${SACKERL.name}`), el("div", "weg", sackerlWeg(b))], euro(b.sackerlBetrag));
+    zeile([el("span", "", `Summe für ${umfang(b)}`)], euro(b.summe), "gesamt");
     return b;
   }
 
@@ -383,7 +408,7 @@
     knopf.textContent = "Wird gesendet …";
     document.getElementById("fehler").hidden = true;
     const { mengen, anmerkung } = entwurf;
-    const daten = { mitglied, servizzante: mengen[0], red: mengen[1], white: mengen[2],
+    const daten = { mitglied, servizzante: mengen[0], red: mengen[1], white: mengen[2], sackerl: mengen[3] || 0,
                     summe: summentext(mengen), anmerkung };
     const abbruch = new AbortController();
     const uhr = setTimeout(() => abbruch.abort(), 25000);
@@ -489,7 +514,7 @@
     frueher.hidden = !alte.length;
     frueher.replaceChildren(...alte.map(a => {
       const p = document.createElement("p");
-      const sorten = SORTEN.map((s, i) => a.mengen[i] ? `${a.mengen[i]} × ${s.name}` : "").filter(Boolean).join(", ");
+      const sorten = ARTIKEL.map((s, i) => a.mengen[i] ? `${a.mengen[i]} × ${s.name}` : "").filter(Boolean).join(", ");
       p.append(Object.assign(document.createElement("b"), { textContent: `Abgeholt am ${zeitText(a.abgeholt).split(" um ")[0]}: ` }),
                `${sorten}, ${euro(bestellung(a.mengen).summe)}`);
       return p;
@@ -526,11 +551,11 @@
       "Danach siehst du deine Bestellung mit allen Preisen noch einmal und schickst sie ab.";
     document.getElementById("los").onclick = () =>
       pruefen(rechnen(), document.getElementById("anmerkung").value.trim());
-    document.getElementById("nichts").onclick = e => { e.preventDefault(); pruefen([0, 0, 0], ""); };
+    document.getElementById("nichts").onclick = e => { e.preventDefault(); pruefen([0, 0, 0, 0], ""); };
   } else {
     document.getElementById("los").onclick = () =>
       weiter(rechnen(), document.getElementById("anmerkung").value.trim());
-    document.getElementById("nichts").onclick = e => { e.preventDefault(); weiter([0, 0, 0], ""); };
+    document.getElementById("nichts").onclick = e => { e.preventDefault(); weiter([0, 0, 0, 0], ""); };
   }
   document.getElementById("abschicken").onclick = abschicken;
   document.getElementById("zurueck").onclick = () => zeige("schritt-bestellen");

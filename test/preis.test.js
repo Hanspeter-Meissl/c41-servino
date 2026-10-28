@@ -10,6 +10,10 @@ const faelle = [
   { mengen: [0, 8, 0], summe: 134, fehlen: 0 },   // Karton Red + 2 einzeln
   { mengen: [2, 0, 1], summe: 48, fehlen: 3 },    // unter Mindestmenge
   { mengen: [0, 0, 0], summe: 0, fehlen: 0 },     // keine Bestellung
+  { mengen: [2, 2, 2, 3], summe: 107.7, fehlen: 0 },  // mit 3 Sackerl: 102 + 5,70
+  { mengen: [0, 0, 0, 3], summe: 5.7, fehlen: 0 },    // nur Sackerl, keine Mindestmenge
+  { mengen: [2, 0, 1, 6], summe: 59.4, fehlen: 3 },   // Sackerl zählen nicht zur Mindestmenge
+  { mengen: [0, 6, 0, 7], summe: 109.3, fehlen: 0 },  // 96 + 13,30, kein Kartonpreis für Sackerl
 ];
 
 let fehler = 0;

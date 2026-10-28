@@ -11,6 +11,10 @@ const SORTEN = [
   { schluessel: "white", name: "Servino White Seven", art: "Weißwein", einzel: 16, karton: 13 },
 ];
 const MINDESTMENGE = 6;
+// Seit 28. Oktober 2026: Wein-Geschenksackerl mit Sichtfenster, Stückpreis ohne Kartonpreis.
+// Es steht in den Mengen hinter den Sorten, zählt nicht als Flasche und nicht zur Mindestbestellung
+// und lässt sich auch allein bestellen. Preis in Cent, damit die Summe nicht auf 5,6999… rundet.
+const SACKERL = { schluessel: "sackerl", name: "Wein-Geschenksackerl", kurz: "Sackerl", art: "mit Sichtfenster, für eine Flasche", cent: 190 };
 
 function zeile(sorte, menge) {
   const kartons = Math.floor(menge / 6);
@@ -18,11 +22,15 @@ function zeile(sorte, menge) {
   return { kartons, rest, betrag: kartons * 6 * sorte.karton + rest * sorte.einzel };
 }
 
+// mengen: je Sorte die Flaschen, danach die Sackerl.
 function bestellung(mengen) {
   const zeilen = SORTEN.map((s, i) => zeile(s, mengen[i] || 0));
-  const flaschen = mengen.reduce((a, n) => a + (n || 0), 0);
-  const summe = zeilen.reduce((a, z) => a + z.betrag, 0);
-  return { zeilen, flaschen, summe, fehlen: flaschen > 0 && flaschen < MINDESTMENGE ? MINDESTMENGE - flaschen : 0 };
+  const flaschen = SORTEN.reduce((a, s, i) => a + (mengen[i] || 0), 0);
+  const sackerl = mengen[SORTEN.length] || 0;
+  const sackerlBetrag = sackerl * SACKERL.cent / 100;
+  const summe = (zeilen.reduce((a, z) => a + z.betrag, 0) * 100 + sackerl * SACKERL.cent) / 100;
+  return { zeilen, flaschen, sackerl, sackerlBetrag, summe,
+           fehlen: flaschen > 0 && flaschen < MINDESTMENGE ? MINDESTMENGE - flaschen : 0 };
 }
 
-if (typeof module !== "undefined") module.exports = { SORTEN, MINDESTMENGE, zeile, bestellung };
+if (typeof module !== "undefined") module.exports = { SORTEN, SACKERL, MINDESTMENGE, zeile, bestellung };

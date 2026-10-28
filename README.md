@@ -4,7 +4,8 @@ Bestellseite für SERVINO, den Wein der sieben Grieskirchner Serviceclubs, für 
 des Club 41 Grieskirchen-Hausruck. Veröffentlicht über GitHub Pages.
 
 Die Seite rechnet während der Eingabe Zeilenpreise und Bestellsumme und prüft die
-Mindestbestellung von 6 Flaschen. „Bestellung prüfen“ zeigt die Bestellung mit allen Preisen
+Mindestbestellung von 6 Flaschen. Seit 28. Oktober 2026 gibt es dazu das Wein-Geschenksackerl zu 1,90 €
+je Stück; es zählt nicht zur Mindestbestellung und lässt sich auch allein bestellen. „Bestellung prüfen“ zeigt die Bestellung mit allen Preisen
 noch einmal, „Bestellung abschicken“ schickt sie an die Google-Web-App „SERVINO Bestellannahme“
 (Konstante `GOOGLE` in `index.html`, Quelle `03 Bereiche/Club C41/SERVINO/Google/Code.gs` im Vault).
 Die Web-App prüft das Mitglied und schreibt eine Zeile in die Google-Tabelle „SERVINO Bestellungen 2026“.
