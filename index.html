@@ -96,9 +96,33 @@
     .sorte img { width: 36px; height: 120px; grid-row: span 3; }
     .betrag { text-align: left; }
   }
+  /* Ladeanzeige, solange die bisherige Bestellung geholt wird. Nur mit persönlichem Link, siehe Skript im Kopf. */
+  .laden { display: none; }
+  html.laedt .laden {
+    position: fixed; inset: 0; z-index: 10; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 14px; padding: var(--rand); background: var(--hell); text-align: center;
+  }
+  html.laedt body { overflow: hidden; }
+  .laden .rad {
+    width: 34px; height: 34px; border-radius: 50%; border: 4px solid var(--linie); border-top-color: var(--navy);
+    border-right-color: var(--gold); animation: drehen .9s linear infinite;
+  }
+  @keyframes drehen { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .laden .rad { animation-duration: 3s; } }
+  .laden p { margin: 0; font-weight: 600; color: var(--navy); }
 </style>
+<script>
+  // Seit 29. Oktober 2026: Mit persönlichem Link liegt die Ladeanzeige schon beim ersten Zeichnen über der Seite,
+  // bis bisherLaden() die bisherige Bestellung geholt hat. Vorher stand kurz das leere Formular da. Spätestens nach
+  // 25 Sekunden ist sie weg, auch wenn das Skript unten nicht durchläuft.
+  if (new URLSearchParams(location.search).get("m")) {
+    document.documentElement.classList.add("laedt");
+    setTimeout(() => document.documentElement.classList.remove("laedt"), 25000);
+  }
+</script>
 </head>
 <body>
+<div class="laden" role="status" aria-live="polite"><div class="rad" aria-hidden="true"></div><p>Deine Bestellung wird geladen</p></div>
 <main>
   <header>
     <img src="bilder/logo.jpg" alt="Wappen Club 41">
@@ -556,8 +580,13 @@
     zeige("schritt-bisher");
   }
 
+  // Nimmt die Ladeanzeige weg, sobald die bisherige Bestellung da ist oder feststeht, dass keine kommt.
+  function geladen() {
+    document.documentElement.classList.remove("laedt");
+  }
+
   async function bisherLaden() {
-    if (!GOOGLE || !mitglied) return;
+    if (!GOOGLE || !mitglied) return geladen();
     zeileSetzen("Deine bisherige Bestellung wird geladen …");
     const abbruch = new AbortController();
     const uhr = setTimeout(() => abbruch.abort(), 20000);
@@ -580,6 +609,7 @@
       zeileSetzen("");
     } finally {
       clearTimeout(uhr);
+      geladen();
     }
   }
 
