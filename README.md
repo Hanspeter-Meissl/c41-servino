@@ -1,7 +1,7 @@
 # SERVINO-Bestellseite Club 41
 
 Bestellseite für SERVINO, den Wein der sieben Grieskirchner Serviceclubs, für die Mitglieder
-des Club 41 Grieskirchen-Hausruck. Veröffentlicht über GitHub Pages.
+des Club 41 Grieskirchen. Veröffentlicht über GitHub Pages.
 
 Die Seite rechnet während der Eingabe Zeilenpreise und Bestellsumme und prüft die
 Mindestbestellung von 6 Flaschen. Seit 28. Oktober 2026 gibt es dazu das Wein-Geschenksackerl zu 1,90 €
