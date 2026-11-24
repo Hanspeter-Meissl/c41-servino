@@ -141,7 +141,7 @@
   <p class="bisher-zeile" id="bisher-zeile" hidden></p>
   <div class="titel" id="titel">
   <img class="titelbild" src="bilder/flaschen.jpg" alt="Servizzante, Servino Red Seven und Servino White Seven">
-  <p class="abholung" id="abholung"><b>Abholung am 19.11. ab 17:00</b><span>bei Herbert in der „Kellergasse“</span></p>
+  <p class="abholung" id="abholung"><b>Abholung</b><span>mit Herbert vereinbaren</span></p>
   </div>
   <div id="einleitung">
   <p>SERVINO ist der Wein der sieben Grieskirchner Serviceclubs, abgefüllt vom Weingut Hagn. Der Erlös geht an karitative Zwecke.</p>
@@ -149,7 +149,7 @@
   <div class="regel">
     <p>Für jeden vollen Karton mit 6 Flaschen derselben Sorte gilt der Kartonpreis. Gemischte Flaschen kosten den Einzelpreis. Die Mindestbestellung sind 6 Flaschen.</p>
     <p>Neu dazu gibt es das Wein-Geschenksackerl mit Sichtfenster um 1,90 € je Stück. Auch hier kommt der Erlös einem karitativen Zweck zugute.</p>
-    <p>Wegen der großen Nachfrage gibt es keinen Bestellschluss mehr, du kannst weiter bestellen. Abholung am 19. November ab 17:00 Uhr bei Herbert in der „Kellergasse“. Den Betrag bucht Christian ab.</p>
+    <p>Wegen der großen Nachfrage gibt es keinen Bestellschluss mehr, du kannst weiter bestellen. Abholung mit Herbert vereinbaren. Den Betrag bucht Christian ab.</p>
   </div>
   </div>
 
@@ -479,13 +479,13 @@
     const bestellt = mengen.some(n => n);
     document.getElementById("danke-titel").textContent = vorname ? `Danke, ${vorname}!` : "Danke!";
     // Bis zum Meeting am 12. November gilt die Ausgabe dort, bis 19. November die Abholung bei Herbert,
-    // danach nennt Hanspeter den Termin.
+    // seit 24. November vereinbart jeder die Abholung mit Herbert.
     const jetzt = new Date();
     const ausgabe = jetzt < new Date("2026-11-13T00:00:00")
       ? "Abholen kannst du den Wein beim Meeting am 12. November, dort wird er auch verkostet."
       : jetzt < new Date("2026-11-20T00:00:00")
       ? "Abholen kannst du den Wein am 19. November ab 17:00 Uhr bei Herbert in der „Kellergasse“."
-      : "Wann du den Wein abholen kannst, sagt dir Hanspeter.";
+      : "Die Abholung vereinbarst du mit Herbert.";
     document.getElementById("danke-text").textContent = bestellt
       ? `Deine ${neueBestellung ? "zusätzliche " : ""}SERVINO-Bestellung ist eingegangen. ${ausgabe} Den Betrag bucht Christian ab.`
       : offeneBestellung ? `Deine ${neueBestellung ? "zusätzliche " : ""}Bestellung ist storniert.`
